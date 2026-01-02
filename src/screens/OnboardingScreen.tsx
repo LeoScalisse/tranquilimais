@@ -6,6 +6,7 @@ import { playSound } from '../services/soundService';
 import { HeartIcon, BrainIcon, MoonIcon, ShieldIcon, TargetIcon } from '../components/ui/Icons';
 import AuthSwitch from '../components/ui/auth-switch';
 import LoginForm from '../components/LoginForm';
+import logoImage from '../assets/Logo.png';
 
 interface OnboardingScreenProps {
   onComplete: (profile: UserProfile) => void;
@@ -172,10 +173,11 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
           
           {/* Logo */}
           <div className="relative z-10 flex items-center justify-center">
-            <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center shadow-lg animate-float">
-              <span className="text-4xl font-bold text-primary-foreground">T</span>
-              <span className="text-2xl font-bold text-accent">+</span>
-            </div>
+            <img 
+              src={logoImage} 
+              alt="Tranquili+ Logo" 
+              className="w-32 h-32 object-contain animate-float drop-shadow-lg"
+            />
           </div>
         </div>
 
