@@ -296,13 +296,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className={`w-full max-w-md text-center transition-opacity duration-200 ${fade ? 'opacity-100' : 'opacity-0'}`}>
-        {/* Content */}
-        <h1 className="text-2xl font-bold text-foreground mb-2">{currentQuestion.title}</h1>
-        <p className="text-muted-foreground mb-4">{currentQuestion.subtitle}</p>
-        
-        {currentQuestion.content}
-
-        {/* Progress Indicator */}
+        {/* Progress Indicator - At the top */}
         <ProgressIndicator
           currentStep={step}
           totalSteps={questions.length}
@@ -319,6 +313,12 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
           continueDisabled={isButtonDisabled}
           continueText={currentQuestion.buttonText}
         />
+
+        {/* Content */}
+        <h1 className="text-2xl font-bold text-foreground mb-2 mt-6">{currentQuestion.title}</h1>
+        <p className="text-muted-foreground mb-4">{currentQuestion.subtitle}</p>
+        
+        {currentQuestion.content}
       </div>
     </div>
   );
