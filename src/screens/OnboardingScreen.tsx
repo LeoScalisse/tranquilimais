@@ -176,7 +176,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
             <img 
               src={logoImage} 
               alt="Tranquili+ Logo" 
-              className="w-32 h-32 object-contain animate-float drop-shadow-lg"
+              className="w-32 h-32 object-cover rounded-full animate-float drop-shadow-lg"
             />
           </div>
         </div>
