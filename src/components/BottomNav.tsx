@@ -1,7 +1,8 @@
 import React from 'react';
 import { Screen } from '../types';
-import { ICON_SETS } from '../constants';
 import { playSound } from '../services/soundService';
+import { Dock, DockIcon, DockItem, DockLabel } from './ui/dock';
+import { Home, MessageCircle, Heart, Gamepad2, BarChart3, Newspaper } from 'lucide-react';
 
 interface BottomNavProps {
   activeScreen: Screen;
@@ -9,15 +10,14 @@ interface BottomNavProps {
   iconSet: string;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, navigateTo, iconSet }) => {
-  const icons = ICON_SETS[iconSet] || ICON_SETS.default;
-
+const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, navigateTo }) => {
   const navItems = [
-    { screen: Screen.Home, icon: icons.home, label: 'Início' },
-    { screen: Screen.Chat, icon: icons.chat, label: 'Chat' },
-    { screen: Screen.Gratitude, icon: icons.gratitude, label: 'Gratidão' },
-    { screen: Screen.Games, icon: icons.games, label: 'Jogos' },
-    { screen: Screen.Reports, icon: icons.reports, label: 'Evolução' },
+    { screen: Screen.Home, icon: Home, label: 'Início' },
+    { screen: Screen.Chat, icon: MessageCircle, label: 'Tranquilinha' },
+    { screen: Screen.Gratitude, icon: Heart, label: 'Gratidão' },
+    { screen: Screen.Games, icon: Gamepad2, label: 'Games' },
+    { screen: Screen.Reports, icon: BarChart3, label: 'Evolução' },
+    { screen: Screen.News, icon: Newspaper, label: 'Notícias' },
   ];
 
   const handleClick = (screen: Screen) => {
@@ -28,30 +28,29 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, navigateTo, iconSet
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-100 px-2 py-2 z-50 shadow-lg">
-      <div className="flex justify-around items-center max-w-lg mx-auto">
-        {navItems.map(({ screen, icon, label }) => {
+    <nav className="fixed bottom-0 left-0 right-0 z-50 pb-2">
+      <Dock
+        magnification={60}
+        distance={100}
+        panelHeight={56}
+        className="gap-2"
+      >
+        {navItems.map(({ screen, icon: Icon, label }) => {
           const isActive = activeScreen === screen;
           return (
-            <button
+            <DockItem
               key={screen}
               onClick={() => handleClick(screen)}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-[60px] ${
-                isActive
-                  ? 'text-tranquili-blue bg-tranquili-blue/10 scale-105'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-              }`}
+              isActive={isActive}
             >
-              <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
-                {icon}
-              </span>
-              <span className={`text-[10px] mt-1 font-medium transition-opacity ${isActive ? 'opacity-100' : 'opacity-70'}`}>
-                {label}
-              </span>
-            </button>
+              <DockLabel>{label}</DockLabel>
+              <DockIcon className={isActive ? 'text-tranquili-blue' : 'text-gray-500'}>
+                <Icon className="w-full h-full" />
+              </DockIcon>
+            </DockItem>
           );
         })}
-      </div>
+      </Dock>
     </nav>
   );
 };
