@@ -8,6 +8,7 @@ import AuthSwitch from '../components/ui/auth-switch';
 import LoginForm from '../components/LoginForm';
 import logoImage from '../assets/Logo.png';
 import ProgressIndicator from '../components/ui/progress-indicator';
+import { useAuth } from '@/hooks/useAuth';
 
 interface OnboardingScreenProps {
   onComplete: (profile: UserProfile) => void;
@@ -49,20 +50,43 @@ const timelineData = [
 const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [path, setPath] = useState('');
   const [reason, setReason] = useState('');
   const [fade, setFade] = useState(true);
   const [authMode, setAuthMode] = useState<'choose' | 'new' | 'login'>('choose');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const { signUp } = useAuth();
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // On the last step, create the account
+    if (step === questions.length) {
+      setLoading(true);
+      const { error: signUpError } = await signUp(email, password, { name, path, reason });
+      setLoading(false);
+
+      if (signUpError) {
+        if (signUpError.message.includes('already registered')) {
+          setError('Este email já está cadastrado');
+        } else {
+          setError('Erro ao criar conta. Tente novamente.');
+        }
+        playSound('error');
+        return;
+      }
+
+      playSound('confirm');
+      onComplete({ name, path, reason });
+      return;
+    }
+
     setFade(false);
     setTimeout(() => {
-      if (step === questions.length - 1) {
-        onComplete({ name, path, reason });
-      } else {
-        setStep(step + 1);
-        setFade(true);
-      }
+      setStep(step + 1);
+      setFade(true);
     }, 200);
     playSound('select');
   };
@@ -75,7 +99,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   const handleNewUser = () => {
     playSound('select');
     setAuthMode('new');
-    setStep(1); // Go to name input step
+    setStep(1);
   };
 
   const handleExistingUser = () => {
@@ -83,17 +107,16 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     setAuthMode('login');
   };
 
-  const handleLogin = (email: string, password: string) => {
-    // For demo purposes, just complete with default profile
-    // In a real app, this would authenticate with backend
-    const savedName = email.split('@')[0];
-    onComplete({ name: savedName, path: 'AUTOCUIDADO', reason: 'Usuário existente' });
+  const handleLogin = () => {
+    // Login is handled in LoginForm with useAuth
+    onComplete({ name: '', path: 'AUTOCUIDADO', reason: '' });
   };
 
   const handleBackToChoose = () => {
     playSound('select');
     setAuthMode('choose');
     setStep(0);
+    setError('');
   };
 
   const FeaturePreview = () => (
@@ -155,13 +178,11 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     </div>
   );
 
-  // Auth Choose Screen - First screen with white background and blue animation
+  // Auth Choose Screen
   const AuthChooseScreen = () => (
     <div className="min-h-screen bg-card flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md text-center animate-fade-in">
-        {/* Animated Logo */}
         <div className="relative mb-8">
-          {/* Pulse rings */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-32 h-32 rounded-full bg-primary/20 pulse-ring" />
           </div>
@@ -172,7 +193,6 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
             <div className="w-48 h-48 rounded-full bg-primary/5 pulse-ring pulse-ring-delay-2" />
           </div>
           
-          {/* Logo */}
           <div className="relative z-10 flex items-center justify-center">
             <img 
               src={logoImage} 
@@ -182,7 +202,6 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
           </div>
         </div>
 
-        {/* Brand Text */}
         <h1 className="text-4xl font-bold text-foreground mb-2">
           Tranquili<span className="text-accent">+</span>
         </h1>
@@ -190,7 +209,6 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
           Seu refúgio de calma, clareza e bem-estar.
         </p>
 
-        {/* Auth Switch */}
         <AuthSwitch onNewUser={handleNewUser} onExistingUser={handleExistingUser} />
       </div>
     </div>
@@ -200,7 +218,6 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   const LoginScreen = () => (
     <div className="min-h-screen bg-card flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-2xl font-bold text-primary-foreground">T</span>
@@ -213,12 +230,10 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     </div>
   );
 
-  // Show auth choose screen first
   if (authMode === 'choose') {
     return <AuthChooseScreen />;
   }
 
-  // Show login screen
   if (authMode === 'login') {
     return <LoginScreen />;
   }
@@ -271,24 +286,44 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
       buttonText: 'Próximo',
     },
     {
-      title: "Tudo pronto!",
-      subtitle: "Seu espaço seguro foi criado com sucesso.",
+      title: "Crie sua conta",
+      subtitle: "Para salvar seu progresso e acessar de qualquer lugar.",
       content: (
-        <div className="mt-8 flex justify-center">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center animate-pulse">
-            <CheckIcon className="w-12 h-12 text-green-600" />
+        <div className="mt-6 space-y-4 w-full">
+          <div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError(''); }}
+              placeholder="Seu email"
+              className="w-full p-4 text-center bg-secondary border-2 border-border focus:border-primary outline-none transition-colors rounded-xl text-foreground placeholder-muted-foreground"
+            />
           </div>
+          <div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              placeholder="Crie uma senha (mín. 6 caracteres)"
+              className="w-full p-4 text-center bg-secondary border-2 border-border focus:border-primary outline-none transition-colors rounded-xl text-foreground placeholder-muted-foreground"
+            />
+          </div>
+          {error && (
+            <p className="text-destructive text-sm text-center animate-fade-in">{error}</p>
+          )}
         </div>
       ),
       showButton: true,
-      buttonText: 'Entrar no App',
-    }
+      buttonText: 'Criar conta',
+    },
   ];
 
-  const currentQuestion = questions[step - 1]; // Adjusted since step 0 is now auth choose
-  const isButtonDisabled = (step === 1 && !name) || (step === 3 && !path);
+  const currentQuestion = questions[step - 1];
+  const isButtonDisabled = loading || 
+    (step === 1 && !name) || 
+    (step === 3 && !path) ||
+    (step === 5 && (!email || !password || password.length < 6 || !email.includes('@')));
 
-  // If step is 0 (shouldn't happen in 'new' mode, but just in case)
   if (step === 0 || !currentQuestion) {
     return <AuthChooseScreen />;
   }
@@ -296,7 +331,6 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className={`w-full max-w-md text-center transition-opacity duration-200 ${fade ? 'opacity-100' : 'opacity-0'}`}>
-        {/* Progress Indicator - At the top */}
         <ProgressIndicator
           currentStep={step}
           totalSteps={questions.length}
@@ -311,10 +345,9 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
           }}
           isExpanded={step === 1}
           continueDisabled={isButtonDisabled}
-          continueText={currentQuestion.buttonText}
+          continueText={loading ? 'Criando...' : currentQuestion.buttonText}
         />
 
-        {/* Content */}
         <h1 className="text-2xl font-bold text-foreground mb-2 mt-6">{currentQuestion.title}</h1>
         <p className="text-muted-foreground mb-4">{currentQuestion.subtitle}</p>
         

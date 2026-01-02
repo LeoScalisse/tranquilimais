@@ -8,7 +8,7 @@ import { BentoCard, BentoGrid } from '../components/ui/bento-grid';
 import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper } from 'lucide-react';
 
 interface HomeScreenProps {
-  userProfile: UserProfile | null;
+  userProfile: UserProfile;
   moodHistory: MoodEntry[];
   onMoodSelect: (mood: Mood) => void;
   navigateTo: (screen: Screen) => void;

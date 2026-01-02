@@ -11,10 +11,11 @@ import GratitudeScreen from '../screens/GratitudeScreen';
 import BottomNav from '../components/BottomNav';
 import SideMenu from '../components/SideMenu';
 import { setMasterVolume } from '../services/soundService';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { useMoods } from '@/hooks/useMoods';
 
 const STORAGE_KEYS = {
-  profile: 'tranquili_profile',
-  moodHistory: 'tranquili_mood_history',
   chatHistory: 'tranquili_chat_history',
   settings: 'tranquili_settings',
 };
@@ -26,52 +27,42 @@ const getDefaultSettings = (): AppSettings => ({
 });
 
 const App: React.FC = () => {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
+  const { moodHistory, addMood, loading: moodsLoading } = useMoods();
+  
   const [activeScreen, setActiveScreen] = useState<Screen>(Screen.Home);
-  const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [settings, setSettings] = useState<AppSettings>(getDefaultSettings());
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage
+  // Load from localStorage (only for non-DB data)
   useEffect(() => {
-    const storedProfile = localStorage.getItem(STORAGE_KEYS.profile);
-    const storedMood = localStorage.getItem(STORAGE_KEYS.moodHistory);
     const storedChat = localStorage.getItem(STORAGE_KEYS.chatHistory);
     const storedSettings = localStorage.getItem(STORAGE_KEYS.settings);
 
-    if (storedProfile) setUserProfile(JSON.parse(storedProfile));
-    if (storedMood) setMoodHistory(JSON.parse(storedMood));
     if (storedChat) setChatHistory(JSON.parse(storedChat));
     if (storedSettings) {
       const parsed = JSON.parse(storedSettings);
       setSettings(parsed);
       setMasterVolume(parsed.soundVolume);
     }
-    setIsLoading(false);
   }, []);
 
   // Save to localStorage
   useEffect(() => {
-    if (!isLoading) {
-      if (userProfile) localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(userProfile));
-      localStorage.setItem(STORAGE_KEYS.moodHistory, JSON.stringify(moodHistory));
-      localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(chatHistory));
-      localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
-    }
-  }, [userProfile, moodHistory, chatHistory, settings, isLoading]);
+    localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(chatHistory));
+    localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
+  }, [chatHistory, settings]);
 
-  const handleOnboardingComplete = (profile: UserProfile) => {
-    setUserProfile(profile);
+  const handleOnboardingComplete = () => {
+    // Profile is created automatically via trigger
     setActiveScreen(Screen.Home);
   };
 
-  const handleMoodSelect = (mood: Mood) => {
-    const today = new Date().toISOString().split('T')[0];
-    if (moodHistory.some(entry => entry.date === today)) return;
-    setMoodHistory([...moodHistory, { date: today, mood }]);
+  const handleMoodSelect = async (mood: Mood) => {
+    await addMood(mood);
   };
 
   const handleSendMessage = useCallback((message: string) => {
@@ -104,28 +95,37 @@ const App: React.FC = () => {
     }, 1500);
   }, []);
 
-  const handleLogout = () => {
-    setUserProfile(null);
-    setMoodHistory([]);
+  const handleLogout = async () => {
+    await signOut();
     setChatHistory([]);
     setSettings(getDefaultSettings());
-    localStorage.clear();
+    localStorage.removeItem(STORAGE_KEYS.chatHistory);
   };
+
+  const isLoading = authLoading || (user && (profileLoading || moodsLoading));
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-tranquili-blue border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Carregando...</p>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
   }
 
-  if (!userProfile) {
+  // Not logged in - show onboarding
+  if (!user || !profile) {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
+
+  const userProfile: UserProfile = {
+    id: profile.id,
+    name: profile.name,
+    path: profile.path,
+    reason: profile.reason
+  };
 
   const renderScreen = () => {
     switch (activeScreen) {
@@ -144,7 +144,13 @@ const App: React.FC = () => {
       case Screen.Games:
         return <GamesScreen />;
       case Screen.Reports:
-        return <ReportsScreen moodHistory={moodHistory} chatCount={chatHistory.filter(m => m.role === 'user').length} />;
+        return (
+          <ReportsScreen 
+            moodHistory={moodHistory} 
+            chatCount={chatHistory.filter(m => m.role === 'user').length}
+            userProfile={userProfile}
+          />
+        );
       case Screen.Settings:
         return <SettingsScreen settings={settings} onSettingsChange={setSettings} />;
       case Screen.News:
@@ -157,7 +163,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="min-h-screen bg-background relative">
       <main className="h-screen overflow-hidden">{renderScreen()}</main>
       <BottomNav activeScreen={activeScreen} navigateTo={setActiveScreen} iconSet={settings.iconSet} />
       <SideMenu
