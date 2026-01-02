@@ -69,12 +69,14 @@ const newsData: NewsArticle[] = [
   }
 ];
 
+const categories = ['Todos', 'Meditação', 'Sono', 'Nutrição', 'Exercícios', 'Social', 'Trabalho'];
+
 const NewsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
 
   useEffect(() => {
-    // Simulate loading
     const timer = setTimeout(() => {
       setArticles(newsData);
       setIsLoading(false);
@@ -82,6 +84,10 @@ const NewsScreen: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  const filteredArticles = selectedCategory === 'Todos'
+    ? articles
+    : articles.filter(article => article.category === selectedCategory);
 
   const cardVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -105,42 +111,67 @@ const NewsScreen: React.FC = () => {
   return (
     <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
       <h1 className="text-3xl font-bold mb-2 text-gray-900">Notícias</h1>
-      <p className="text-gray-500 mb-6">Artigos sobre bem-estar e saúde mental</p>
+      <p className="text-gray-500 mb-4">Artigos sobre bem-estar e saúde mental</p>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {articles.map((article, index) => (
-          <motion.div
-            key={article.id}
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            custom={index}
-            className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+      {/* Category Filter */}
+      <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
+        {categories.map((category) => (
+          <motion.button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            whileTap={{ scale: 0.95 }}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              selectedCategory === category
+                ? 'bg-tranquili-blue text-white shadow-md'
+                : 'bg-white text-gray-600 border border-gray-200 hover:border-tranquili-blue hover:text-tranquili-blue'
+            }`}
           >
-            <div className="relative h-32 overflow-hidden">
-              <img
-                src={article.image}
-                alt={article.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700">
-                {article.category}
-              </div>
-              <div className="absolute top-2 right-2 text-2xl">
-                {article.emoji}
-              </div>
-            </div>
-            <div className="p-4">
-              <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">{article.title}</h3>
-              <p className="text-sm text-gray-500 line-clamp-2 mb-2">{article.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-tranquili-blue font-medium">{article.readTime} de leitura</span>
-                <span className="text-xs text-gray-400">Ler mais →</span>
-              </div>
-            </div>
-          </motion.div>
+            {category}
+          </motion.button>
         ))}
       </div>
+
+      {filteredArticles.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">Nenhum artigo encontrado nesta categoria.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {filteredArticles.map((article, index) => (
+            <motion.div
+              key={article.id}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              custom={index}
+              layout
+              className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+            >
+              <div className="relative h-32 overflow-hidden">
+                <img
+                  src={article.image}
+                  alt={article.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700">
+                  {article.category}
+                </div>
+                <div className="absolute top-2 right-2 text-2xl">
+                  {article.emoji}
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">{article.title}</h3>
+                <p className="text-sm text-gray-500 line-clamp-2 mb-2">{article.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-tranquili-blue font-medium">{article.readTime} de leitura</span>
+                  <span className="text-xs text-gray-400">Ler mais →</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
