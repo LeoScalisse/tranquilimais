@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { playSound } from '../services/soundService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => void;
@@ -10,8 +11,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Preencha todos os campos');
@@ -28,6 +31,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onBack }) => {
       playSound('error');
       return;
     }
+
+    setLoading(true);
+    const { error: signInError } = await signIn(email, password);
+    setLoading(false);
+
+    if (signInError) {
+      if (signInError.message.includes('Invalid login credentials')) {
+        setError('Email ou senha incorretos');
+      } else {
+        setError('Erro ao fazer login. Tente novamente.');
+      }
+      playSound('error');
+      return;
+    }
+
     playSound('confirm');
     onLogin(email, password);
   };
@@ -52,6 +70,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onBack }) => {
             }}
             placeholder="seu@email.com"
             className="w-full p-4 rounded-xl bg-secondary border-2 border-border focus:border-primary outline-none transition-colors text-foreground placeholder-muted-foreground"
+            disabled={loading}
           />
         </div>
         
@@ -69,6 +88,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onBack }) => {
             }}
             placeholder="••••••••"
             className="w-full p-4 rounded-xl bg-secondary border-2 border-border focus:border-primary outline-none transition-colors text-foreground placeholder-muted-foreground"
+            disabled={loading}
           />
         </div>
 
@@ -78,9 +98,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onBack }) => {
 
         <button
           type="submit"
-          className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:opacity-90"
+          disabled={loading}
+          className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:opacity-90 disabled:opacity-50"
         >
-          Entrar
+          {loading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
 
@@ -89,7 +110,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onBack }) => {
           playSound('select');
           onBack();
         }}
-        className="mt-4 w-full py-3 text-muted-foreground hover:text-foreground transition-colors"
+        disabled={loading}
+        className="mt-4 w-full py-3 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
       >
         ← Voltar
       </button>

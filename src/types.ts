@@ -1,7 +1,7 @@
 export type Mood = 'happy' | 'calm' | 'neutral' | 'sad' | 'anxious';
 
 export interface MoodEntry {
-  id?: number;
+  id?: string;
   user_id?: string;
   date: string;
   mood: Mood;
