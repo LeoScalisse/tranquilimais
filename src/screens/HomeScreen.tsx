@@ -4,6 +4,8 @@ import { MOOD_OPTIONS, MOOD_EMOJIS, MOOD_HEX_COLORS, WELLNESS_TIPS, ICON_SETS } 
 import { playSound } from '../services/soundService';
 import { RefreshCwIcon, MenuIcon } from '../components/ui/Icons';
 import BrandText from '../components/BrandText';
+import { BentoCard, BentoGrid } from '../components/ui/bento-grid';
+import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper } from 'lucide-react';
 
 interface HomeScreenProps {
   userProfile: UserProfile | null;
@@ -290,55 +292,68 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
       <GratitudeJournal />
 
-      <div className="grid grid-cols-2 gap-4">
-        <button
+      <BentoGrid className="grid-cols-2 lg:grid-cols-3 auto-rows-[140px] lg:auto-rows-[180px]">
+        <BentoCard
+          name="Conversar"
+          className="col-span-1 lg:col-span-1 bg-gradient-to-br from-tranquili-blue to-blue-400"
+          background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />}
+          Icon={MessageCircle}
+          description="Fale com a Tranquilinha"
           onClick={() => {
             playSound('select');
             navigateTo(Screen.Chat);
           }}
-          className="bg-gradient-to-br from-tranquili-blue to-blue-400 p-4 rounded-xl text-white text-left shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <span className="text-2xl mb-2 block">💬</span>
-          <h3 className="font-bold">Conversar</h3>
-          <p className="text-xs opacity-80">Fale com a Tranquilinha</p>
-        </button>
-
-        <button
+          cta="Acessar"
+        />
+        <BentoCard
+          name="Jogar"
+          className="col-span-1 lg:col-span-1 bg-gradient-to-br from-purple-400 to-pink-400"
+          background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />}
+          Icon={Gamepad2}
+          description="Relaxe a mente"
           onClick={() => {
             playSound('select');
             navigateTo(Screen.Games);
           }}
-          className="bg-gradient-to-br from-purple-400 to-pink-400 p-4 rounded-xl text-white text-left shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <span className="text-2xl mb-2 block">🎮</span>
-          <h3 className="font-bold">Jogar</h3>
-          <p className="text-xs opacity-80">Relaxe a mente</p>
-        </button>
-
-        <button
+          cta="Jogar"
+        />
+        <BentoCard
+          name="Evolução"
+          className="col-span-1 lg:col-span-1 bg-gradient-to-br from-green-400 to-emerald-400"
+          background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />}
+          Icon={BarChart3}
+          description="Veja seu progresso"
           onClick={() => {
             playSound('select');
             navigateTo(Screen.Reports);
           }}
-          className="bg-gradient-to-br from-green-400 to-emerald-400 p-4 rounded-xl text-white text-left shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <span className="text-2xl mb-2 block">📊</span>
-          <h3 className="font-bold">Evolução</h3>
-          <p className="text-xs opacity-80">Veja seu progresso</p>
-        </button>
-
-        <button
+          cta="Ver relatórios"
+        />
+        <BentoCard
+          name="Gratidão"
+          className="col-span-1 lg:col-span-1 bg-gradient-to-br from-yellow-400 to-orange-400"
+          background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />}
+          Icon={Heart}
+          description="Diário de gratidão"
           onClick={() => {
             playSound('select');
             navigateTo(Screen.Gratitude);
           }}
-          className="bg-gradient-to-br from-yellow-400 to-orange-400 p-4 rounded-xl text-white text-left shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <span className="text-2xl mb-2 block">🙏</span>
-          <h3 className="font-bold">Gratidão</h3>
-          <p className="text-xs opacity-80">Diário de gratidão</p>
-        </button>
-      </div>
+          cta="Acessar"
+        />
+        <BentoCard
+          name="Notícias"
+          className="col-span-2 lg:col-span-1 bg-gradient-to-br from-sky-400 to-cyan-400"
+          background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />}
+          Icon={Newspaper}
+          description="Novidades e artigos sobre bem-estar"
+          onClick={() => {
+            playSound('select');
+            navigateTo(Screen.News);
+          }}
+          cta="Ler mais"
+        />
+      </BentoGrid>
     </div>
   );
 };
