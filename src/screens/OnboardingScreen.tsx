@@ -4,6 +4,8 @@ import { CheckIcon } from '../components/ui/Icons';
 import { ICON_SETS } from '../constants';
 import { playSound } from '../services/soundService';
 import { HeartIcon, BrainIcon, MoonIcon, ShieldIcon, TargetIcon } from '../components/ui/Icons';
+import AuthSwitch from '../components/ui/auth-switch';
+import LoginForm from '../components/LoginForm';
 
 interface OnboardingScreenProps {
   onComplete: (profile: UserProfile) => void;
@@ -48,6 +50,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   const [path, setPath] = useState('');
   const [reason, setReason] = useState('');
   const [fade, setFade] = useState(true);
+  const [authMode, setAuthMode] = useState<'choose' | 'new' | 'login'>('choose');
 
   const handleNext = () => {
     setFade(false);
@@ -67,27 +70,51 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     playSound('select');
   };
 
+  const handleNewUser = () => {
+    playSound('select');
+    setAuthMode('new');
+    setStep(1); // Go to name input step
+  };
+
+  const handleExistingUser = () => {
+    playSound('select');
+    setAuthMode('login');
+  };
+
+  const handleLogin = (email: string, password: string) => {
+    // For demo purposes, just complete with default profile
+    // In a real app, this would authenticate with backend
+    const savedName = email.split('@')[0];
+    onComplete({ name: savedName, path: 'AUTOCUIDADO', reason: 'Usuário existente' });
+  };
+
+  const handleBackToChoose = () => {
+    playSound('select');
+    setAuthMode('choose');
+    setStep(0);
+  };
+
   const FeaturePreview = () => (
     <div className="mt-6 space-y-4 text-left animate-fade-in">
-      <div className="flex items-center p-3 bg-white border border-gray-100 shadow-sm rounded-xl">
-        <div className="p-2 bg-blue-50 rounded-full mr-3 text-tranquili-blue">{ICON_SETS.default.reports}</div>
+      <div className="flex items-center p-3 bg-card border border-border shadow-sm rounded-xl">
+        <div className="p-2 bg-primary/10 rounded-full mr-3 text-primary">{ICON_SETS.default.reports}</div>
         <div>
-          <h3 className="font-bold text-gray-900 text-sm">Diário de Humor</h3>
-          <p className="text-xs text-gray-600">Registre e entenda seus sentimentos.</p>
+          <h3 className="font-bold text-foreground text-sm">Diário de Humor</h3>
+          <p className="text-xs text-muted-foreground">Registre e entenda seus sentimentos.</p>
         </div>
       </div>
-      <div className="flex items-center p-3 bg-white border border-gray-100 shadow-sm rounded-xl">
-        <div className="p-2 bg-green-50 rounded-full mr-3 text-green-500">{ICON_SETS.default.chat}</div>
+      <div className="flex items-center p-3 bg-card border border-border shadow-sm rounded-xl">
+        <div className="p-2 bg-green-500/10 rounded-full mr-3 text-green-500">{ICON_SETS.default.chat}</div>
         <div>
-          <h3 className="font-bold text-gray-900 text-sm">Tranquilinha IA</h3>
-          <p className="text-xs text-gray-600">Converse e receba apoio a qualquer hora.</p>
+          <h3 className="font-bold text-foreground text-sm">Tranquilinha IA</h3>
+          <p className="text-xs text-muted-foreground">Converse e receba apoio a qualquer hora.</p>
         </div>
       </div>
-      <div className="flex items-center p-3 bg-white border border-gray-100 shadow-sm rounded-xl">
-        <div className="p-2 bg-yellow-50 rounded-full mr-3 text-yellow-500">{ICON_SETS.default.games}</div>
+      <div className="flex items-center p-3 bg-card border border-border shadow-sm rounded-xl">
+        <div className="p-2 bg-accent/20 rounded-full mr-3 text-accent-foreground">{ICON_SETS.default.games}</div>
         <div>
-          <h3 className="font-bold text-gray-900 text-sm">Pausa Mental</h3>
-          <p className="text-xs text-gray-600">Jogos para acalmar a mente.</p>
+          <h3 className="font-bold text-foreground text-sm">Pausa Mental</h3>
+          <p className="text-xs text-muted-foreground">Jogos para acalmar a mente.</p>
         </div>
       </div>
     </div>
@@ -104,20 +131,20 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
             onClick={() => handlePathSelect(item.title)}
             className={`flex items-center p-4 rounded-xl border-2 transition-all duration-300 ${
               isSelected
-                ? 'border-tranquili-blue bg-tranquili-blue/10'
-                : 'border-gray-200 bg-white hover:border-tranquili-blue/50'
+                ? 'border-primary bg-primary/10'
+                : 'border-border bg-card hover:border-primary/50'
             }`}
           >
-            <div className={`p-2 rounded-full mr-3 ${isSelected ? 'bg-tranquili-blue text-white' : 'bg-gray-100 text-gray-500'}`}>
+            <div className={`p-2 rounded-full mr-3 ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
               <Icon className="w-5 h-5" />
             </div>
             <div className="text-left flex-1">
-              <h3 className="font-bold text-gray-900 text-sm">{item.title}</h3>
-              <p className="text-xs text-gray-600">{item.description}</p>
+              <h3 className="font-bold text-foreground text-sm">{item.title}</h3>
+              <p className="text-xs text-muted-foreground">{item.description}</p>
             </div>
             {isSelected && (
-              <div className="w-6 h-6 rounded-full bg-tranquili-blue flex items-center justify-center">
-                <CheckIcon className="w-4 h-4 text-white" />
+              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                <CheckIcon className="w-4 h-4 text-primary-foreground" />
               </div>
             )}
           </button>
@@ -126,17 +153,77 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     </div>
   );
 
+  // Auth Choose Screen - First screen with white background and blue animation
+  const AuthChooseScreen = () => (
+    <div className="min-h-screen bg-card flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-md text-center animate-fade-in">
+        {/* Animated Logo */}
+        <div className="relative mb-8">
+          {/* Pulse rings */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-32 h-32 rounded-full bg-primary/20 pulse-ring" />
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-40 h-40 rounded-full bg-primary/10 pulse-ring pulse-ring-delay-1" />
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-48 h-48 rounded-full bg-primary/5 pulse-ring pulse-ring-delay-2" />
+          </div>
+          
+          {/* Logo */}
+          <div className="relative z-10 flex items-center justify-center">
+            <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center shadow-lg animate-float">
+              <span className="text-4xl font-bold text-primary-foreground">T</span>
+              <span className="text-2xl font-bold text-accent">+</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Brand Text */}
+        <h1 className="text-4xl font-bold text-foreground mb-2">
+          Tranquili<span className="text-accent">+</span>
+        </h1>
+        <p className="text-muted-foreground mb-10">
+          Seu refúgio de calma, clareza e bem-estar.
+        </p>
+
+        {/* Auth Switch */}
+        <AuthSwitch onNewUser={handleNewUser} onExistingUser={handleExistingUser} />
+      </div>
+    </div>
+  );
+
+  // Login Screen
+  const LoginScreen = () => (
+    <div className="min-h-screen bg-card flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <span className="text-2xl font-bold text-primary-foreground">T</span>
+            <span className="text-lg font-bold text-accent">+</span>
+          </div>
+        </div>
+        
+        <LoginForm onLogin={handleLogin} onBack={handleBackToChoose} />
+      </div>
+    </div>
+  );
+
+  // Show auth choose screen first
+  if (authMode === 'choose') {
+    return <AuthChooseScreen />;
+  }
+
+  // Show login screen
+  if (authMode === 'login') {
+    return <LoginScreen />;
+  }
+
   const questions = [
     {
-      title: <>Bem-vindo ao <br /><span className="text-4xl block mt-2 text-tranquili-blue">Tranquili<span className="text-tranquili-yellow">+</span></span></>,
-      subtitle: "Seu refúgio de calma, clareza e bem-estar.",
-      content: null,
-      showButton: true,
-      buttonText: 'Começar Jornada',
-    },
-    {
       title: "Como você gostaria de ser chamado?",
-      subtitle: <>Para tornarmos sua experiência <span className="text-tranquili-yellow">+</span> pessoal.</>,
+      subtitle: <>Para tornarmos sua experiência <span className="text-accent">+</span> pessoal.</>,
       content: (
         <div className="mt-6 w-full">
           <input
@@ -144,7 +231,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Seu nome ou apelido"
-            className="w-full p-4 text-center text-xl bg-gray-50 border-b-2 border-gray-200 focus:border-tranquili-blue outline-none transition-colors rounded-t-lg text-gray-900 placeholder-gray-400"
+            className="w-full p-4 text-center text-xl bg-secondary border-b-2 border-border focus:border-primary outline-none transition-colors rounded-t-lg text-foreground placeholder-muted-foreground"
             autoFocus
           />
         </div>
@@ -174,7 +261,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Escreva aqui..."
-          className="mt-4 p-4 border border-gray-200 rounded-xl w-full h-32 focus:ring-2 focus:ring-tranquili-blue outline-none resize-none bg-gray-50 text-gray-900 placeholder-gray-400"
+          className="mt-4 p-4 border border-border rounded-xl w-full h-32 focus:ring-2 focus:ring-primary outline-none resize-none bg-secondary text-foreground placeholder-muted-foreground"
         />
       ),
       showButton: true,
@@ -195,27 +282,47 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     }
   ];
 
-  const currentQuestion = questions[step];
+  const currentQuestion = questions[step - 1]; // Adjusted since step 0 is now auth choose
   const isButtonDisabled = (step === 1 && !name) || (step === 3 && !path);
 
+  // If step is 0 (shouldn't happen in 'new' mode, but just in case)
+  if (step === 0 || !currentQuestion) {
+    return <AuthChooseScreen />;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className={`w-full max-w-md text-center transition-opacity duration-200 ${fade ? 'opacity-100' : 'opacity-0'}`}>
+        {/* Back button */}
+        <button
+          onClick={() => {
+            if (step === 1) {
+              handleBackToChoose();
+            } else {
+              setStep(step - 1);
+              playSound('select');
+            }
+          }}
+          className="absolute top-6 left-6 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          ← Voltar
+        </button>
+
         {/* Progress */}
         <div className="flex gap-2 mb-8 justify-center">
           {questions.map((_, idx) => (
             <div
               key={idx}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === step ? 'w-8 bg-tranquili-blue' : idx < step ? 'w-4 bg-tranquili-blue/50' : 'w-4 bg-gray-200'
+                idx === step - 1 ? 'w-8 bg-primary' : idx < step - 1 ? 'w-4 bg-primary/50' : 'w-4 bg-border'
               }`}
             />
           ))}
         </div>
 
         {/* Content */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{currentQuestion.title}</h1>
-        <p className="text-gray-600 mb-4">{currentQuestion.subtitle}</p>
+        <h1 className="text-2xl font-bold text-foreground mb-2">{currentQuestion.title}</h1>
+        <p className="text-muted-foreground mb-4">{currentQuestion.subtitle}</p>
         
         {currentQuestion.content}
 
@@ -224,10 +331,10 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
           <button
             onClick={handleNext}
             disabled={isButtonDisabled}
-            className={`mt-8 px-8 py-3 rounded-xl font-bold text-white transition-all duration-300 ${
+            className={`mt-8 px-8 py-3 rounded-xl font-bold text-primary-foreground transition-all duration-300 ${
               isButtonDisabled
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-tranquili-blue hover:bg-blue-500 shadow-lg hover:shadow-xl'
+                ? 'bg-muted cursor-not-allowed text-muted-foreground'
+                : 'bg-primary hover:opacity-90 shadow-lg hover:shadow-xl'
             }`}
           >
             {currentQuestion.buttonText}
