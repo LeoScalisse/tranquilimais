@@ -7,6 +7,7 @@ import { HeartIcon, BrainIcon, MoonIcon, ShieldIcon, TargetIcon } from '../compo
 import AuthSwitch from '../components/ui/auth-switch';
 import LoginForm from '../components/LoginForm';
 import logoImage from '../assets/Logo.png';
+import ProgressIndicator from '../components/ui/progress-indicator';
 
 interface OnboardingScreenProps {
   onComplete: (profile: UserProfile) => void;
@@ -295,9 +296,18 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className={`w-full max-w-md text-center transition-opacity duration-200 ${fade ? 'opacity-100' : 'opacity-0'}`}>
-        {/* Back button */}
-        <button
-          onClick={() => {
+        {/* Content */}
+        <h1 className="text-2xl font-bold text-foreground mb-2">{currentQuestion.title}</h1>
+        <p className="text-muted-foreground mb-4">{currentQuestion.subtitle}</p>
+        
+        {currentQuestion.content}
+
+        {/* Progress Indicator */}
+        <ProgressIndicator
+          currentStep={step}
+          totalSteps={questions.length}
+          onContinue={handleNext}
+          onBack={() => {
             if (step === 1) {
               handleBackToChoose();
             } else {
@@ -305,43 +315,10 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
               playSound('select');
             }
           }}
-          className="absolute top-6 left-6 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          ← Voltar
-        </button>
-
-        {/* Progress */}
-        <div className="flex gap-2 mb-8 justify-center">
-          {questions.map((_, idx) => (
-            <div
-              key={idx}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === step - 1 ? 'w-8 bg-primary' : idx < step - 1 ? 'w-4 bg-primary/50' : 'w-4 bg-border'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Content */}
-        <h1 className="text-2xl font-bold text-foreground mb-2">{currentQuestion.title}</h1>
-        <p className="text-muted-foreground mb-4">{currentQuestion.subtitle}</p>
-        
-        {currentQuestion.content}
-
-        {/* Button */}
-        {currentQuestion.showButton && (
-          <button
-            onClick={handleNext}
-            disabled={isButtonDisabled}
-            className={`mt-8 px-8 py-3 rounded-xl font-bold text-primary-foreground transition-all duration-300 ${
-              isButtonDisabled
-                ? 'bg-muted cursor-not-allowed text-muted-foreground'
-                : 'bg-primary hover:opacity-90 shadow-lg hover:shadow-xl'
-            }`}
-          >
-            {currentQuestion.buttonText}
-          </button>
-        )}
+          isExpanded={step === 1}
+          continueDisabled={isButtonDisabled}
+          continueText={currentQuestion.buttonText}
+        />
       </div>
     </div>
   );
