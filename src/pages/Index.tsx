@@ -15,6 +15,8 @@ import { setMasterVolume } from '../services/soundService';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useMoods } from '@/hooks/useMoods';
+import { useAchievements } from '@/hooks/useAchievements';
+import { toast } from 'sonner';
 
 const STORAGE_KEYS = {
   chatHistory: 'tranquili_chat_history',
@@ -33,6 +35,7 @@ const App: React.FC = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { moodHistory, addMood, loading: moodsLoading } = useMoods();
+  const { achievements, checkAndUnlockAchievements, unlockedCount, totalCount } = useAchievements();
   
   const [activeScreen, setActiveScreen] = useState<Screen>(Screen.Home);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -71,8 +74,22 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   }, [chatHistory, settings]);
 
+  // Check achievements when mood history changes
+  useEffect(() => {
+    if (user && moodHistory.length > 0) {
+      const userChatCount = chatHistory.filter(m => m.role === 'user').length;
+      checkAndUnlockAchievements(moodHistory, userChatCount).then((newlyUnlocked) => {
+        if (newlyUnlocked.length > 0) {
+          const achievement = achievements.find(a => a.id === newlyUnlocked[0]);
+          if (achievement) {
+            toast.success(`🏆 Conquista desbloqueada: ${achievement.title}!`);
+          }
+        }
+      });
+    }
+  }, [moodHistory, user]);
+
   const handleOnboardingComplete = (profile: { name: string; path: string; reason: string }) => {
-    // Save to localStorage for guest users
     localStorage.setItem(STORAGE_KEYS.onboarding, JSON.stringify(profile));
     localStorage.setItem(STORAGE_KEYS.onboardingCompleted, 'true');
     setLocalOnboarding(profile);
@@ -93,7 +110,7 @@ const App: React.FC = () => {
     await addMood(mood);
   };
 
-  const handleSendMessage = useCallback((message: string) => {
+  const handleSendMessage = useCallback(async (message: string) => {
     if (!user) {
       showSignUp('Crie sua conta para conversar', 'Converse com a Tranquilinha e receba apoio personalizado');
       return;
@@ -107,6 +124,14 @@ const App: React.FC = () => {
     };
     setChatHistory(prev => [...prev, userMessage]);
     setIsChatLoading(true);
+
+    // Check for first chat achievement
+    const userChatCount = chatHistory.filter(m => m.role === 'user').length + 1;
+    checkAndUnlockAchievements(moodHistory, userChatCount).then((newlyUnlocked) => {
+      if (newlyUnlocked.includes('first_chat')) {
+        toast.success('🏆 Conquista desbloqueada: Abrindo o Coração!');
+      }
+    });
 
     // Simulate AI response
     setTimeout(() => {
@@ -126,10 +151,9 @@ const App: React.FC = () => {
       setChatHistory(prev => [...prev, aiMessage]);
       setIsChatLoading(false);
     }, 1500);
-  }, [user]);
+  }, [user, chatHistory, moodHistory, checkAndUnlockAchievements]);
 
   const handleNavigateTo = (screen: Screen) => {
-    // Protected screens that require auth
     if (screen === Screen.News && !user) {
       showSignUp('Crie sua conta para acessar', 'Leia notícias e artigos sobre bem-estar');
       return;
@@ -152,7 +176,6 @@ const App: React.FC = () => {
     setLocalOnboarding(null);
   };
 
-  // Show loading only if auth is loading
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -164,12 +187,10 @@ const App: React.FC = () => {
     );
   }
 
-  // Show onboarding if not completed (for both guests and logged out users)
   if (!onboardingCompleted && !user) {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
 
-  // If user is logged in but profile is still loading
   if (user && profileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -181,7 +202,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Build user profile from DB or localStorage
   const userProfile: UserProfile = user && profile 
     ? {
         id: profile.id,
@@ -218,6 +238,7 @@ const App: React.FC = () => {
             moodHistory={user ? moodHistory : []} 
             chatCount={chatHistory.filter(m => m.role === 'user').length}
             userProfile={userProfile}
+            achievements={achievements}
           />
         );
       case Screen.Settings:
