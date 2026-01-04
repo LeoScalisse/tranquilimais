@@ -10,6 +10,7 @@ import NewsScreen from '../screens/NewsScreen';
 import GratitudeScreen from '../screens/GratitudeScreen';
 import BottomNav from '../components/BottomNav';
 import SideMenu from '../components/SideMenu';
+import SignUpDialog from '../components/SignUpDialog';
 import { setMasterVolume } from '../services/soundService';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -18,6 +19,8 @@ import { useMoods } from '@/hooks/useMoods';
 const STORAGE_KEYS = {
   chatHistory: 'tranquili_chat_history',
   settings: 'tranquili_settings',
+  onboarding: 'tranquili_onboarding',
+  onboardingCompleted: 'tranquili_onboarding_completed',
 };
 
 const getDefaultSettings = (): AppSettings => ({
@@ -36,17 +39,29 @@ const App: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings>(getDefaultSettings());
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
+  const [signUpDialogConfig, setSignUpDialogConfig] = useState({ title: '', description: '' });
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [localOnboarding, setLocalOnboarding] = useState<{ name: string; path: string; reason: string } | null>(null);
 
-  // Load from localStorage (only for non-DB data)
+  // Load from localStorage
   useEffect(() => {
     const storedChat = localStorage.getItem(STORAGE_KEYS.chatHistory);
     const storedSettings = localStorage.getItem(STORAGE_KEYS.settings);
+    const storedOnboardingCompleted = localStorage.getItem(STORAGE_KEYS.onboardingCompleted);
+    const storedOnboarding = localStorage.getItem(STORAGE_KEYS.onboarding);
 
     if (storedChat) setChatHistory(JSON.parse(storedChat));
     if (storedSettings) {
       const parsed = JSON.parse(storedSettings);
       setSettings(parsed);
       setMasterVolume(parsed.soundVolume);
+    }
+    if (storedOnboardingCompleted === 'true') {
+      setOnboardingCompleted(true);
+    }
+    if (storedOnboarding) {
+      setLocalOnboarding(JSON.parse(storedOnboarding));
     }
   }, []);
 
@@ -56,16 +71,34 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   }, [chatHistory, settings]);
 
-  const handleOnboardingComplete = () => {
-    // Profile is created automatically via trigger
+  const handleOnboardingComplete = (profile: { name: string; path: string; reason: string }) => {
+    // Save to localStorage for guest users
+    localStorage.setItem(STORAGE_KEYS.onboarding, JSON.stringify(profile));
+    localStorage.setItem(STORAGE_KEYS.onboardingCompleted, 'true');
+    setLocalOnboarding(profile);
+    setOnboardingCompleted(true);
     setActiveScreen(Screen.Home);
   };
 
+  const showSignUp = (title: string, description: string) => {
+    setSignUpDialogConfig({ title, description });
+    setShowSignUpDialog(true);
+  };
+
   const handleMoodSelect = async (mood: Mood) => {
+    if (!user) {
+      showSignUp('Crie sua conta para registrar', 'Salve seu humor diário e acompanhe sua evolução');
+      return;
+    }
     await addMood(mood);
   };
 
   const handleSendMessage = useCallback((message: string) => {
+    if (!user) {
+      showSignUp('Crie sua conta para conversar', 'Converse com a Tranquilinha e receba apoio personalizado');
+      return;
+    }
+
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -93,18 +126,34 @@ const App: React.FC = () => {
       setChatHistory(prev => [...prev, aiMessage]);
       setIsChatLoading(false);
     }, 1500);
-  }, []);
+  }, [user]);
+
+  const handleNavigateTo = (screen: Screen) => {
+    // Protected screens that require auth
+    if (screen === Screen.News && !user) {
+      showSignUp('Crie sua conta para acessar', 'Leia notícias e artigos sobre bem-estar');
+      return;
+    }
+    if (screen === Screen.Games && !user) {
+      showSignUp('Crie sua conta para jogar', 'Acesse jogos relaxantes para sua pausa mental');
+      return;
+    }
+    setActiveScreen(screen);
+  };
 
   const handleLogout = async () => {
     await signOut();
     setChatHistory([]);
     setSettings(getDefaultSettings());
     localStorage.removeItem(STORAGE_KEYS.chatHistory);
+    localStorage.removeItem(STORAGE_KEYS.onboarding);
+    localStorage.removeItem(STORAGE_KEYS.onboardingCompleted);
+    setOnboardingCompleted(false);
+    setLocalOnboarding(null);
   };
 
-  const isLoading = authLoading || (user && (profileLoading || moodsLoading));
-
-  if (isLoading) {
+  // Show loading only if auth is loading
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -115,17 +164,37 @@ const App: React.FC = () => {
     );
   }
 
-  // Not logged in - show onboarding
-  if (!user || !profile) {
+  // Show onboarding if not completed (for both guests and logged out users)
+  if (!onboardingCompleted && !user) {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
 
-  const userProfile: UserProfile = {
-    id: profile.id,
-    name: profile.name,
-    path: profile.path,
-    reason: profile.reason
-  };
+  // If user is logged in but profile is still loading
+  if (user && profileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Build user profile from DB or localStorage
+  const userProfile: UserProfile = user && profile 
+    ? {
+        id: profile.id,
+        name: profile.name,
+        path: profile.path,
+        reason: profile.reason
+      }
+    : {
+        id: 'guest',
+        name: localOnboarding?.name || 'Visitante',
+        path: localOnboarding?.path || 'AUTOCUIDADO',
+        reason: localOnboarding?.reason || null
+      };
 
   const renderScreen = () => {
     switch (activeScreen) {
@@ -133,9 +202,9 @@ const App: React.FC = () => {
         return (
           <HomeScreen
             userProfile={userProfile}
-            moodHistory={moodHistory}
+            moodHistory={user ? moodHistory : []}
             onMoodSelect={handleMoodSelect}
-            navigateTo={setActiveScreen}
+            navigateTo={handleNavigateTo}
             onOpenSideMenu={() => setIsSideMenuOpen(true)}
           />
         );
@@ -146,7 +215,7 @@ const App: React.FC = () => {
       case Screen.Reports:
         return (
           <ReportsScreen 
-            moodHistory={moodHistory} 
+            moodHistory={user ? moodHistory : []} 
             chatCount={chatHistory.filter(m => m.role === 'user').length}
             userProfile={userProfile}
           />
@@ -158,21 +227,29 @@ const App: React.FC = () => {
       case Screen.Gratitude:
         return <GratitudeScreen />;
       default:
-        return <HomeScreen userProfile={userProfile} moodHistory={moodHistory} onMoodSelect={handleMoodSelect} navigateTo={setActiveScreen} onOpenSideMenu={() => setIsSideMenuOpen(true)} />;
+        return <HomeScreen userProfile={userProfile} moodHistory={user ? moodHistory : []} onMoodSelect={handleMoodSelect} navigateTo={handleNavigateTo} onOpenSideMenu={() => setIsSideMenuOpen(true)} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-background relative">
       <main className="h-screen overflow-hidden">{renderScreen()}</main>
-      <BottomNav activeScreen={activeScreen} navigateTo={setActiveScreen} iconSet={settings.iconSet} />
+      <BottomNav activeScreen={activeScreen} navigateTo={handleNavigateTo} iconSet={settings.iconSet} />
       <SideMenu
         isOpen={isSideMenuOpen}
         onClose={() => setIsSideMenuOpen(false)}
         userProfile={userProfile}
-        navigateTo={setActiveScreen}
+        navigateTo={handleNavigateTo}
         onLogout={handleLogout}
         iconSet={settings.iconSet}
+        isGuest={!user}
+        onShowSignUp={() => showSignUp('Crie sua conta', 'Salve seu progresso e acesse de qualquer lugar')}
+      />
+      <SignUpDialog
+        open={showSignUpDialog}
+        onOpenChange={setShowSignUpDialog}
+        title={signUpDialogConfig.title}
+        description={signUpDialogConfig.description}
       />
     </div>
   );
