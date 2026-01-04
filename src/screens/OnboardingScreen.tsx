@@ -11,7 +11,7 @@ import ProgressIndicator from '../components/ui/progress-indicator';
 import { useAuth } from '@/hooks/useAuth';
 
 interface OnboardingScreenProps {
-  onComplete: (profile: UserProfile) => void;
+  onComplete: (profile: { name: string; path: string; reason: string }) => void;
 }
 
 const timelineData = [
@@ -50,34 +50,16 @@ const timelineData = [
 const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [path, setPath] = useState('');
   const [reason, setReason] = useState('');
   const [fade, setFade] = useState(true);
   const [authMode, setAuthMode] = useState<'choose' | 'new' | 'login'>('choose');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   
-  const { signUp } = useAuth();
+  const { signIn } = useAuth();
 
-  const handleNext = async () => {
-    // On the last step, create the account
+  const handleNext = () => {
+    // On the last step, complete without account creation
     if (step === questions.length) {
-      setLoading(true);
-      const { error: signUpError } = await signUp(email, password, { name, path, reason });
-      setLoading(false);
-
-      if (signUpError) {
-        if (signUpError.message.includes('already registered')) {
-          setError('Este email já está cadastrado');
-        } else {
-          setError('Erro ao criar conta. Tente novamente.');
-        }
-        playSound('error');
-        return;
-      }
-
       playSound('confirm');
       onComplete({ name, path, reason });
       return;
@@ -108,7 +90,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   };
 
   const handleLogin = () => {
-    // Login is handled in LoginForm with useAuth
+    // Login handled in LoginForm, redirect to home
     onComplete({ name: '', path: 'AUTOCUIDADO', reason: '' });
   };
 
@@ -116,7 +98,6 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     playSound('select');
     setAuthMode('choose');
     setStep(0);
-    setError('');
   };
 
   const FeaturePreview = () => (
@@ -278,51 +259,19 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Escreva aqui..."
+          placeholder="Escreva aqui... (opcional)"
           className="mt-4 p-4 border border-border rounded-xl w-full h-32 focus:ring-2 focus:ring-primary outline-none resize-none bg-secondary text-foreground placeholder-muted-foreground"
         />
       ),
       showButton: true,
-      buttonText: 'Próximo',
-    },
-    {
-      title: "Crie sua conta",
-      subtitle: "Para salvar seu progresso e acessar de qualquer lugar.",
-      content: (
-        <div className="mt-6 space-y-4 w-full">
-          <div>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setError(''); }}
-              placeholder="Seu email"
-              className="w-full p-4 text-center bg-secondary border-2 border-border focus:border-primary outline-none transition-colors rounded-xl text-foreground placeholder-muted-foreground"
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(''); }}
-              placeholder="Crie uma senha (mín. 6 caracteres)"
-              className="w-full p-4 text-center bg-secondary border-2 border-border focus:border-primary outline-none transition-colors rounded-xl text-foreground placeholder-muted-foreground"
-            />
-          </div>
-          {error && (
-            <p className="text-destructive text-sm text-center animate-fade-in">{error}</p>
-          )}
-        </div>
-      ),
-      showButton: true,
-      buttonText: 'Criar conta',
+      buttonText: 'Começar',
     },
   ];
 
   const currentQuestion = questions[step - 1];
-  const isButtonDisabled = loading || 
+  const isButtonDisabled = 
     (step === 1 && !name) || 
-    (step === 3 && !path) ||
-    (step === 5 && (!email || !password || password.length < 6 || !email.includes('@')));
+    (step === 3 && !path);
 
   if (step === 0 || !currentQuestion) {
     return <AuthChooseScreen />;
@@ -345,7 +294,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
           }}
           isExpanded={step === 1}
           continueDisabled={isButtonDisabled}
-          continueText={loading ? 'Criando...' : currentQuestion.buttonText}
+          continueText={currentQuestion.buttonText}
         />
 
         <h1 className="text-2xl font-bold text-foreground mb-2 mt-6">{currentQuestion.title}</h1>

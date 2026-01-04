@@ -11,6 +11,8 @@ interface SideMenuProps {
   navigateTo: (screen: Screen) => void;
   onLogout: () => void;
   iconSet: string;
+  isGuest?: boolean;
+  onShowSignUp?: () => void;
 }
 
 const SideMenu: React.FC<SideMenuProps> = ({
@@ -20,6 +22,8 @@ const SideMenu: React.FC<SideMenuProps> = ({
   navigateTo,
   onLogout,
   iconSet,
+  isGuest = false,
+  onShowSignUp,
 }) => {
   const icons = ICON_SETS[iconSet] || ICON_SETS.default;
 
@@ -101,13 +105,22 @@ const SideMenu: React.FC<SideMenuProps> = ({
 
           {/* Footer */}
           <div className="p-4 border-t border-gray-100">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-            >
-              <LogOutIcon className="w-5 h-5" />
-              <span className="font-medium">Recomeçar</span>
-            </button>
+            {isGuest ? (
+              <button
+                onClick={() => { onClose(); onShowSignUp?.(); }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl transition-colors font-medium"
+              >
+                Criar conta
+              </button>
+            ) : (
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+              >
+                <LogOutIcon className="w-5 h-5" />
+                <span className="font-medium">Sair</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
