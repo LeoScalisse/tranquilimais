@@ -1,93 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { ExternalLink, RefreshCw, Search } from 'lucide-react';
 import AnimatedLoadingSkeleton from '../components/ui/animated-loading-skeleton';
+import { newsApi, NewsArticle } from '@/lib/api/news';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
-interface NewsArticle {
-  id: number;
-  title: string;
-  description: string;
-  emoji: string;
-  category: string;
-  readTime: string;
-  image: string;
-}
+const categories = ['Todos', 'Meditação', 'Sono', 'Nutrição', 'Exercícios', 'Social', 'Trabalho', 'Ansiedade', 'Depressão'];
 
-const newsData: NewsArticle[] = [
-  {
-    id: 1,
-    title: 'Benefícios da meditação diária',
-    description: 'Descubra como 10 minutos de meditação podem transformar completamente seu dia e melhorar sua saúde mental.',
-    emoji: '🧘',
-    category: 'Meditação',
-    readTime: '5 min',
-    image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&h=200&fit=crop'
-  },
-  {
-    id: 2,
-    title: 'Sono e saúde mental',
-    description: 'A importância de uma boa noite de sono para o equilíbrio emocional e cognitivo.',
-    emoji: '😴',
-    category: 'Sono',
-    readTime: '4 min',
-    image: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400&h=200&fit=crop'
-  },
-  {
-    id: 3,
-    title: 'Alimentação consciente',
-    description: 'Como a alimentação afeta diretamente seu humor e disposição ao longo do dia.',
-    emoji: '🥗',
-    category: 'Nutrição',
-    readTime: '6 min',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=200&fit=crop'
-  },
-  {
-    id: 4,
-    title: 'Exercícios para ansiedade',
-    description: 'Técnicas simples de respiração e movimento que ajudam a aliviar sintomas de ansiedade.',
-    emoji: '🏃',
-    category: 'Exercícios',
-    readTime: '3 min',
-    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&h=200&fit=crop'
-  },
-  {
-    id: 5,
-    title: 'Conexões sociais e bem-estar',
-    description: 'Por que manter relacionamentos saudáveis é essencial para sua felicidade.',
-    emoji: '🤝',
-    category: 'Social',
-    readTime: '5 min',
-    image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=200&fit=crop'
-  },
-  {
-    id: 6,
-    title: 'Mindfulness no trabalho',
-    description: 'Práticas de atenção plena para reduzir o estresse profissional e aumentar a produtividade.',
-    emoji: '💼',
-    category: 'Trabalho',
-    readTime: '4 min',
-    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=200&fit=crop'
-  }
-];
-
-const categories = ['Todos', 'Meditação', 'Sono', 'Nutrição', 'Exercícios', 'Social', 'Trabalho'];
+const categoryEmojis: Record<string, string> = {
+  'Todos': '📰',
+  'Meditação': '🧘',
+  'Sono': '😴',
+  'Nutrição': '🥗',
+  'Exercícios': '🏃',
+  'Social': '🤝',
+  'Trabalho': '💼',
+  'Ansiedade': '😰',
+  'Depressão': '💙',
+  'Saúde Mental': '🧠',
+};
 
 const NewsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [searchQuery, setSearchQuery] = useState('');
+  const { toast } = useToast();
+
+  const fetchNews = useCallback(async (category: string) => {
+    try {
+      const response = await newsApi.searchNews(category, 12);
+      
+      if (response.success && response.data) {
+        setArticles(response.data);
+      } else {
+        toast({
+          title: 'Erro ao buscar notícias',
+          description: response.error || 'Tente novamente mais tarde',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      toast({
+        title: 'Erro de conexão',
+        description: 'Não foi possível conectar ao servidor',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setArticles(newsData);
+    const loadNews = async () => {
+      setIsLoading(true);
+      await fetchNews(selectedCategory);
       setIsLoading(false);
-    }, 2000);
+    };
+    loadNews();
+  }, [selectedCategory, fetchNews]);
 
-    return () => clearTimeout(timer);
-  }, []);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchNews(selectedCategory);
+    setIsRefreshing(false);
+    toast({
+      title: 'Notícias atualizadas',
+      description: 'As últimas notícias foram carregadas',
+    });
+  };
 
-  const filteredArticles = selectedCategory === 'Todos'
-    ? articles
-    : articles.filter(article => article.category === selectedCategory);
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSearchQuery('');
+  };
+
+  const handleOpenArticle = (url: string) => {
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const filteredArticles = searchQuery
+    ? articles.filter(article => 
+        article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.description.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : articles;
 
   const cardVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -100,32 +101,56 @@ const NewsScreen: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
-        <h1 className="text-3xl font-bold mb-6 text-gray-900">Notícias</h1>
-        <p className="text-gray-500 mb-4">Buscando artigos sobre bem-estar...</p>
+      <div className="p-4 pb-28 bg-background h-full overflow-y-auto">
+        <h1 className="text-3xl font-bold mb-6 text-foreground">Notícias & Estudos</h1>
+        <p className="text-muted-foreground mb-4">Buscando artigos sobre bem-estar...</p>
         <AnimatedLoadingSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
-      <h1 className="text-3xl font-bold mb-2 text-gray-900">Notícias</h1>
-      <p className="text-gray-500 mb-4">Artigos sobre bem-estar e saúde mental</p>
+    <div className="p-4 pb-28 bg-background h-full overflow-y-auto">
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-3xl font-bold text-foreground">Notícias & Estudos</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="text-muted-foreground hover:text-primary"
+        >
+          <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+      <p className="text-muted-foreground mb-4">Notícias reais sobre saúde mental e bem-estar</p>
+      
+      {/* Search Bar */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Pesquisar notícias..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 bg-card border-border"
+        />
+      </div>
       
       {/* Category Filter */}
       <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
         {categories.map((category) => (
           <motion.button
             key={category}
-            onClick={() => setSelectedCategory(category)}
+            onClick={() => handleCategoryChange(category)}
             whileTap={{ scale: 0.95 }}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
               selectedCategory === category
-                ? 'bg-tranquili-blue text-white shadow-md'
-                : 'bg-white text-gray-600 border border-gray-200 hover:border-tranquili-blue hover:text-tranquili-blue'
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'bg-card text-muted-foreground border border-border hover:border-primary hover:text-primary'
             }`}
           >
+            <span className="mr-1">{categoryEmojis[category]}</span>
             {category}
           </motion.button>
         ))}
@@ -133,7 +158,19 @@ const NewsScreen: React.FC = () => {
 
       {filteredArticles.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">Nenhum artigo encontrado nesta categoria.</p>
+          <p className="text-muted-foreground">
+            {searchQuery 
+              ? 'Nenhum artigo encontrado para sua pesquisa.' 
+              : 'Nenhuma notícia encontrada. Tente outra categoria.'}
+          </p>
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh} 
+            className="mt-4"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Tentar novamente
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -145,27 +182,29 @@ const NewsScreen: React.FC = () => {
               animate="visible"
               custom={index}
               layout
-              className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleOpenArticle(article.url)}
+              className="bg-card rounded-xl shadow-sm overflow-hidden border border-border hover:shadow-md hover:border-primary/50 transition-all cursor-pointer group"
             >
-              <div className="relative h-32 overflow-hidden">
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700">
-                  {article.category}
-                </div>
-                <div className="absolute top-2 right-2 text-2xl">
-                  {article.emoji}
-                </div>
-              </div>
               <div className="p-4">
-                <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">{article.title}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2 mb-2">{article.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-tranquili-blue font-medium">{article.readTime} de leitura</span>
-                  <span className="text-xs text-gray-400">Ler mais →</span>
+                <div className="flex items-start justify-between mb-2">
+                  <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                    {categoryEmojis[article.category] || '📰'} {article.category}
+                  </span>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <h3 className="font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                  {article.title}
+                </h3>
+                <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+                  {article.description}
+                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-border">
+                  <span className="text-xs text-muted-foreground truncate max-w-[60%]">
+                    📍 {article.source}
+                  </span>
+                  <span className="text-xs text-primary font-medium flex items-center gap-1">
+                    Ler artigo <ExternalLink className="h-3 w-3" />
+                  </span>
                 </div>
               </div>
             </motion.div>
