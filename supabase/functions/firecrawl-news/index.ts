@@ -59,9 +59,7 @@ Deno.serve(async (req) => {
         lang: 'pt',
         country: 'BR',
         tbs: 'qdr:w', // Last week
-        scrapeOptions: {
-          formats: ['markdown'],
-        },
+        // Removed scrapeOptions to speed up search (was causing 60s+ delays)
       }),
     });
 
