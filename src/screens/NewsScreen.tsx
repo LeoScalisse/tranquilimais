@@ -22,6 +22,54 @@ const categoryEmojis: Record<string, string> = {
   'Saúde Mental': '🧠',
 };
 
+const CACHE_KEY = 'tranquili_news_cache';
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
+interface CacheEntry {
+  data: NewsArticle[];
+  timestamp: number;
+  category: string;
+}
+
+const getCache = (category: string): NewsArticle[] | null => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    
+    const entries: CacheEntry[] = JSON.parse(cached);
+    const entry = entries.find(e => e.category === category);
+    
+    if (entry && Date.now() - entry.timestamp < CACHE_DURATION) {
+      return entry.data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const setCache = (category: string, data: NewsArticle[]) => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    let entries: CacheEntry[] = cached ? JSON.parse(cached) : [];
+    
+    // Remove old entry for this category
+    entries = entries.filter(e => e.category !== category);
+    
+    // Add new entry
+    entries.push({ category, data, timestamp: Date.now() });
+    
+    // Keep only last 5 categories cached
+    if (entries.length > 5) {
+      entries = entries.slice(-5);
+    }
+    
+    localStorage.setItem(CACHE_KEY, JSON.stringify(entries));
+  } catch {
+    // Ignore cache errors
+  }
+};
+
 const NewsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -30,41 +78,77 @@ const NewsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
-  const fetchNews = useCallback(async (category: string) => {
+  const fetchNews = useCallback(async (category: string, forceRefresh = false) => {
     try {
+      // Check cache first (unless forcing refresh)
+      if (!forceRefresh) {
+        const cached = getCache(category);
+        if (cached && cached.length > 0) {
+          setArticles(cached);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
       const response = await newsApi.searchNews(category, 12);
       
       if (response.success && response.data) {
         setArticles(response.data);
+        setCache(category, response.data);
       } else {
-        toast({
-          title: 'Erro ao buscar notícias',
-          description: response.error || 'Tente novamente mais tarde',
-          variant: 'destructive',
-        });
+        // If fetch failed but we have cache, use it
+        const cached = getCache(category);
+        if (cached) {
+          setArticles(cached);
+          toast({
+            title: 'Usando cache',
+            description: 'Mostrando notícias salvas anteriormente',
+          });
+        } else {
+          toast({
+            title: 'Erro ao buscar notícias',
+            description: response.error || 'Tente novamente mais tarde',
+            variant: 'destructive',
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching news:', error);
-      toast({
-        title: 'Erro de conexão',
-        description: 'Não foi possível conectar ao servidor',
-        variant: 'destructive',
-      });
+      // Try cache on error
+      const cached = getCache(category);
+      if (cached) {
+        setArticles(cached);
+      } else {
+        toast({
+          title: 'Erro de conexão',
+          description: 'Não foi possível conectar ao servidor',
+          variant: 'destructive',
+        });
+      }
     }
   }, [toast]);
 
   useEffect(() => {
     const loadNews = async () => {
-      setIsLoading(true);
-      await fetchNews(selectedCategory);
-      setIsLoading(false);
+      // Show cached data immediately if available
+      const cached = getCache(selectedCategory);
+      if (cached && cached.length > 0) {
+        setArticles(cached);
+        setIsLoading(false);
+        // Still fetch fresh data in background
+        fetchNews(selectedCategory, false);
+      } else {
+        setIsLoading(true);
+        await fetchNews(selectedCategory);
+        setIsLoading(false);
+      }
     };
     loadNews();
   }, [selectedCategory, fetchNews]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchNews(selectedCategory);
+    await fetchNews(selectedCategory, true); // Force refresh
     setIsRefreshing(false);
     toast({
       title: 'Notícias atualizadas',
