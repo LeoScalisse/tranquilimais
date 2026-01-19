@@ -6,6 +6,7 @@ import { RefreshCwIcon, MenuIcon } from '../components/ui/Icons';
 import BrandText from '../components/BrandText';
 import { BentoCard, BentoGrid } from '../components/ui/bento-grid';
 import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper } from 'lucide-react';
+import PWAInstallPrompt from '../components/PWAInstallPrompt';
 
 interface HomeScreenProps {
   userProfile: UserProfile;
@@ -354,6 +355,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           cta="Ler mais"
         />
       </BentoGrid>
+
+      <PWAInstallPrompt />
     </div>
   );
 };
