@@ -59,6 +59,24 @@
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
+
+  /* PWA input fix - ensures inputs are selectable on iOS/Android PWA */
+  input,
+  textarea,
+  select {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Ensure inputs are focusable in PWA mode */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    -webkit-appearance: none;
+  }
 }
 
 @layer utilities {

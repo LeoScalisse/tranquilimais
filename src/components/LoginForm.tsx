@@ -69,8 +69,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onBack }) => {
               setError('');
             }}
             placeholder="seu@email.com"
-            className="w-full p-4 rounded-xl bg-secondary border-2 border-border focus:border-primary outline-none transition-colors text-foreground placeholder-muted-foreground"
+            className="w-full p-4 rounded-xl bg-secondary border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-foreground placeholder-muted-foreground"
             disabled={loading}
+            autoComplete="email"
+            inputMode="email"
           />
         </div>
         
@@ -87,8 +89,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onBack }) => {
               setError('');
             }}
             placeholder="••••••••"
-            className="w-full p-4 rounded-xl bg-secondary border-2 border-border focus:border-primary outline-none transition-colors text-foreground placeholder-muted-foreground"
+            className="w-full p-4 rounded-xl bg-secondary border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-foreground placeholder-muted-foreground"
             disabled={loading}
+            autoComplete="current-password"
           />
         </div>
 
