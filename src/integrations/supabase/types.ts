@@ -35,6 +35,128 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_records: {
+        Row: {
+          achieved_at: string
+          game_id: string
+          game_name: string
+          id: string
+          level: number | null
+          metadata: Json | null
+          score: number
+          time_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          game_id: string
+          game_name: string
+          id?: string
+          level?: number | null
+          metadata?: Json | null
+          score?: number
+          time_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          game_id?: string
+          game_name?: string
+          id?: string
+          level?: number | null
+          metadata?: Json | null
+          score?: number
+          time_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gratitude_entries: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          mood_emoji: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          mood_emoji?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          mood_emoji?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       moods: {
         Row: {
           created_at: string
@@ -85,6 +207,42 @@ export type Database = {
           path?: string
           reason?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_news: {
+        Row: {
+          category: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          saved_at: string
+          source: string | null
+          title: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          saved_at?: string
+          source?: string | null
+          title: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          saved_at?: string
+          source?: string | null
+          title?: string
+          url?: string
           user_id?: string
         }
         Relationships: []
