@@ -331,8 +331,11 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chatHistory, onSendMessage, isL
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Digite sua mensagem..."
-            className="flex-1 p-3 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none bg-card text-foreground"
+            className="flex-1 p-3 rounded-xl border border-border focus:ring-2 focus:ring-primary focus:border-primary bg-card text-foreground"
             disabled={isLoading}
+            autoComplete="off"
+            autoCorrect="on"
+            enterKeyHint="send"
           />
           <button
             type="submit"
