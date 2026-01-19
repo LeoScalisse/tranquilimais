@@ -225,6 +225,11 @@ const SequenceGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     'bg-blue-400 hover:bg-blue-500',
     'bg-green-400 hover:bg-green-500',
     'bg-yellow-400 hover:bg-yellow-500',
+    'bg-purple-400 hover:bg-purple-500',
+    'bg-pink-400 hover:bg-pink-500',
+    'bg-orange-400 hover:bg-orange-500',
+    'bg-teal-400 hover:bg-teal-500',
+    'bg-indigo-400 hover:bg-indigo-500',
   ];
 
   const startGame = () => {
@@ -237,7 +242,7 @@ const SequenceGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const addToSequence = (currentSequence: number[]) => {
-    const newNumber = Math.floor(Math.random() * 4);
+    const newNumber = Math.floor(Math.random() * 9);
     const newSequence = [...currentSequence, newNumber];
     setSequence(newSequence);
     setIsPlaying(true);
@@ -334,13 +339,13 @@ const SequenceGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {isShowingSequence ? 'Observe a sequência...' : 'Sua vez! Repita a sequência.'}
       </p>
       
-      <div className="grid grid-cols-2 gap-4 max-w-xs">
+      <div className="grid grid-cols-3 gap-3 max-w-xs">
         {colors.map((color, index) => (
           <button
             key={index}
             onClick={() => handleButtonClick(index)}
             disabled={isShowingSequence}
-            className={`w-24 h-24 rounded-2xl transition-all duration-200 ${color} ${
+            className={`w-20 h-20 rounded-2xl transition-all duration-200 ${color} ${
               activeButton === index ? 'scale-110 brightness-125 ring-4 ring-white' : ''
             } ${isShowingSequence ? 'cursor-not-allowed' : ''}`}
           />
