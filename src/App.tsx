@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import InstallPage from "./pages/InstallPage";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import PWALifecycle from "./components/PWALifecycle";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         <PWAInstallPrompt />
+        <PWALifecycle />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
