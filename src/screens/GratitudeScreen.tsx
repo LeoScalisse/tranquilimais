@@ -7,7 +7,6 @@ import { useTranscription } from '@/hooks/useTranscription';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import JournalingModeSelector, { JournalingMode } from '@/components/gratitude/JournalingModeSelector';
-import JournalingPrompts from '@/components/gratitude/JournalingPrompts';
 import DrawingCanvas from '@/components/gratitude/DrawingCanvas';
 import ImageUpload from '@/components/gratitude/ImageUpload';
 import { toast } from '@/hooks/use-toast';
@@ -89,10 +88,6 @@ const GratitudeScreen: React.FC = () => {
     setShowModeSelector(true);
     setTranscribedText(null);
     setNewContent('');
-  };
-
-  const handlePromptSelect = (prompt: string) => {
-    setNewContent(prompt + '\n\n');
   };
 
   const handleCanvasTranscribe = async (imageData: string) => {
@@ -204,13 +199,6 @@ const GratitudeScreen: React.FC = () => {
                 <span className="text-xl">⌨️</span>
                 <span className="font-medium text-foreground">Digite seu journaling</span>
               </div>
-              
-              {/* AI Prompts Suggestions */}
-              <JournalingPrompts 
-                onSelectPrompt={handlePromptSelect}
-                recentEntries={entries.slice(0, 5).map(e => e.content)}
-              />
-              
               <textarea
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}

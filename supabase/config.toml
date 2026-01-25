@@ -5,6 +5,3 @@ verify_jwt = false
 
 [functions.transcribe-handwriting]
 verify_jwt = false
-
-[functions.generate-prompts]
-verify_jwt = false
