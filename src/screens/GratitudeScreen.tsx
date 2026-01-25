@@ -27,6 +27,8 @@ const GratitudeScreen: React.FC = () => {
   const [showModeSelector, setShowModeSelector] = useState(false);
   const [currentMode, setCurrentMode] = useState<JournalingMode | null>(null);
   const [transcribedText, setTranscribedText] = useState<string | null>(null);
+  const [isEditingTranscription, setIsEditingTranscription] = useState(false);
+  const [editedTranscription, setEditedTranscription] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -88,6 +90,8 @@ const GratitudeScreen: React.FC = () => {
     setShowModeSelector(true);
     setTranscribedText(null);
     setNewContent('');
+    setIsEditingTranscription(false);
+    setEditedTranscription('');
   };
 
   const handleCanvasTranscribe = async (imageData: string) => {
@@ -129,6 +133,25 @@ const GratitudeScreen: React.FC = () => {
     setTranscribedText(null);
     setNewContent('');
     setSelectedEmoji(null);
+    setIsEditingTranscription(false);
+    setEditedTranscription('');
+  };
+
+  const handleStartEditTranscription = () => {
+    setEditedTranscription(transcribedText || '');
+    setIsEditingTranscription(true);
+  };
+
+  const handleSaveTranscriptionEdit = () => {
+    if (editedTranscription.trim()) {
+      setTranscribedText(editedTranscription.trim());
+    }
+    setIsEditingTranscription(false);
+  };
+
+  const handleCancelTranscriptionEdit = () => {
+    setIsEditingTranscription(false);
+    setEditedTranscription('');
   };
 
   if (!user) {
@@ -301,47 +324,89 @@ const GratitudeScreen: React.FC = () => {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-3"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">✅</span>
-                <span className="font-medium text-foreground">Revise e salve seu journaling</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✅</span>
+                  <span className="font-medium text-foreground">Revise e salve seu journaling</span>
+                </div>
+                {!isEditingTranscription && (
+                  <button
+                    onClick={handleStartEditTranscription}
+                    className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
+                  >
+                    <EditIcon className="w-4 h-4" /> Editar
+                  </button>
+                )}
               </div>
               
-              <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Texto transcrito:</p>
-                <p className="text-foreground whitespace-pre-wrap">{transcribedText}</p>
-              </div>
+              {isEditingTranscription ? (
+                <div className="space-y-3">
+                  <textarea
+                    value={editedTranscription}
+                    onChange={(e) => setEditedTranscription(e.target.value)}
+                    className="w-full p-3 border border-primary rounded-lg resize-none focus:ring-2 focus:ring-primary outline-none bg-background text-foreground"
+                    rows={4}
+                    autoFocus
+                    placeholder="Edite o texto transcrito..."
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleCancelTranscriptionEdit}
+                      className="flex-1 py-2 rounded-lg border border-border text-muted-foreground hover:bg-muted flex items-center justify-center gap-2"
+                    >
+                      <XIcon className="w-4 h-4" /> Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveTranscriptionEdit}
+                      disabled={!editedTranscription.trim()}
+                      className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <CheckIcon className="w-4 h-4" /> Aplicar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Texto transcrito:</p>
+                  <p className="text-foreground whitespace-pre-wrap">{transcribedText}</p>
+                </div>
+              )}
 
-              {/* Emoji Selector */}
-              <div className="flex gap-2 flex-wrap">
-                {moodEmojis.map((emoji) => (
+              {/* Emoji Selector - only show when not editing */}
+              {!isEditingTranscription && (
+                <div className="flex gap-2 flex-wrap">
+                  {moodEmojis.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
+                      className={`text-2xl p-2 rounded-lg transition-all ${
+                        selectedEmoji === emoji 
+                          ? 'bg-primary/20 scale-110' 
+                          : 'hover:bg-muted'
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!isEditingTranscription && (
+                <div className="flex gap-2">
                   <button
-                    key={emoji}
-                    onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
-                    className={`text-2xl p-2 rounded-lg transition-all ${
-                      selectedEmoji === emoji 
-                        ? 'bg-primary/20 scale-110' 
-                        : 'hover:bg-muted'
-                    }`}
+                    onClick={handleCancelMode}
+                    className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted"
                   >
-                    {emoji}
+                    Refazer
                   </button>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCancelMode}
-                  className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted"
-                >
-                  Refazer
-                </button>
-                <button
-                  onClick={handleAddEntry}
-                  className="flex-1 py-3 rounded-xl font-bold bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center gap-2"
-                >
-                  <CheckIcon className="w-5 h-5" /> Salvar
-                </button>
-              </div>
+                  <button
+                    onClick={handleAddEntry}
+                    className="flex-1 py-3 rounded-xl font-bold bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center gap-2"
+                  >
+                    <CheckIcon className="w-5 h-5" /> Salvar
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
