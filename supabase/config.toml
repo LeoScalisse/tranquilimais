@@ -2,3 +2,6 @@ project_id = "ktkjzvbrfnybdktmhbye"
 
 [functions.firecrawl-news]
 verify_jwt = false
+
+[functions.transcribe-handwriting]
+verify_jwt = false

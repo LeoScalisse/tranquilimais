@@ -3,18 +3,30 @@ import { PlusIcon, TrashIcon, CalendarIcon, EditIcon, CheckIcon, XIcon } from '.
 import { playSound } from '../services/soundService';
 import { useGratitude, GratitudeEntry } from '@/hooks/useGratitude';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranscription } from '@/hooks/useTranscription';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
+import JournalingModeSelector, { JournalingMode } from '@/components/gratitude/JournalingModeSelector';
+import DrawingCanvas from '@/components/gratitude/DrawingCanvas';
+import ImageUpload from '@/components/gratitude/ImageUpload';
+import { toast } from '@/hooks/use-toast';
 
 const moodEmojis = ['😊', '🙏', '💪', '🌟', '❤️', '🌈', '☀️', '🎉'];
 
 const GratitudeScreen: React.FC = () => {
   const { user } = useAuth();
   const { entries, isLoading, fetchEntries, addEntry, deleteEntry, updateEntry } = useGratitude();
+  const { isTranscribing, transcribeImage, transcribeCanvasImage } = useTranscription();
+  
   const [newContent, setNewContent] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  
+  // Journaling mode state
+  const [showModeSelector, setShowModeSelector] = useState(false);
+  const [currentMode, setCurrentMode] = useState<JournalingMode | null>(null);
+  const [transcribedText, setTranscribedText] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -23,13 +35,21 @@ const GratitudeScreen: React.FC = () => {
   }, [user, fetchEntries]);
 
   const handleAddEntry = async () => {
-    if (!newContent.trim()) return;
+    const contentToSave = transcribedText || newContent;
+    if (!contentToSave.trim()) return;
     playSound('confirm');
     
-    const result = await addEntry(newContent, selectedEmoji || undefined);
+    const result = await addEntry(contentToSave, selectedEmoji || undefined);
     if (result) {
       setNewContent('');
       setSelectedEmoji(null);
+      setTranscribedText(null);
+      setCurrentMode(null);
+      setShowModeSelector(false);
+      toast({
+        title: 'Entrada salva!',
+        description: 'Seu journaling foi adicionado ao diário.',
+      });
     }
   };
 
@@ -56,6 +76,42 @@ const GratitudeScreen: React.FC = () => {
     setEditContent('');
   };
 
+  const handleModeSelect = (mode: JournalingMode) => {
+    setCurrentMode(mode);
+    setShowModeSelector(false);
+    setTranscribedText(null);
+    setNewContent('');
+  };
+
+  const handleCancelMode = () => {
+    setCurrentMode(null);
+    setShowModeSelector(true);
+    setTranscribedText(null);
+    setNewContent('');
+  };
+
+  const handleCanvasTranscribe = async (imageData: string) => {
+    const result = await transcribeCanvasImage(imageData);
+    if (result) {
+      setTranscribedText(result);
+      toast({
+        title: 'Texto transcrito!',
+        description: 'Revise o texto abaixo e salve.',
+      });
+    }
+  };
+
+  const handleImageTranscribe = async (base64: string, mimeType: string) => {
+    const result = await transcribeImage(base64, mimeType);
+    if (result) {
+      setTranscribedText(result);
+      toast({
+        title: 'Texto transcrito!',
+        description: 'Revise o texto abaixo e salve.',
+      });
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('pt-BR', { 
@@ -65,6 +121,14 @@ const GratitudeScreen: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const resetJournaling = () => {
+    setShowModeSelector(false);
+    setCurrentMode(null);
+    setTranscribedText(null);
+    setNewContent('');
+    setSelectedEmoji(null);
   };
 
   if (!user) {
@@ -83,44 +147,204 @@ const GratitudeScreen: React.FC = () => {
       <h1 className="text-3xl font-bold mb-2 text-foreground">Diário de Gratidão</h1>
       <p className="text-muted-foreground mb-6">Registre as coisas pelas quais você é grato</p>
 
-      {/* New Entry Form */}
+      {/* New Entry Section */}
       <div className="bg-card p-4 rounded-xl shadow-sm border border-border mb-6">
-        <textarea
-          value={newContent}
-          onChange={(e) => setNewContent(e.target.value)}
-          placeholder="Pelo que você é grato hoje?"
-          className="w-full p-3 border border-border rounded-lg resize-none focus:ring-2 focus:ring-primary outline-none bg-background text-foreground"
-          rows={3}
-        />
-        
-        {/* Emoji Selector */}
-        <div className="flex gap-2 mt-3 flex-wrap">
-          {moodEmojis.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
-              className={`text-2xl p-2 rounded-lg transition-all ${
-                selectedEmoji === emoji 
-                  ? 'bg-primary/20 scale-110' 
-                  : 'hover:bg-muted'
-              }`}
+        <AnimatePresence mode="wait">
+          {/* Initial State - Show "New Entry" button */}
+          {!showModeSelector && !currentMode && !transcribedText && (
+            <motion.div
+              key="new-entry-button"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
             >
-              {emoji}
-            </button>
-          ))}
-        </div>
+              <button
+                onClick={() => setShowModeSelector(true)}
+                className="w-full py-4 rounded-xl border-2 border-dashed border-primary/30 text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+              >
+                <PlusIcon className="w-5 h-5" />
+                <span className="font-medium">Novo Journaling</span>
+              </button>
+            </motion.div>
+          )}
 
-        <button
-          onClick={handleAddEntry}
-          disabled={!newContent.trim()}
-          className={`mt-3 w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-            newContent.trim() 
-              ? 'bg-primary text-primary-foreground hover:opacity-90' 
-              : 'bg-muted text-muted-foreground cursor-not-allowed'
-          }`}
-        >
-          <PlusIcon className="w-5 h-5" /> Adicionar
-        </button>
+          {/* Mode Selector */}
+          {showModeSelector && !currentMode && (
+            <motion.div
+              key="mode-selector"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <JournalingModeSelector onSelectMode={handleModeSelect} />
+              <button
+                onClick={resetJournaling}
+                className="w-full mt-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancelar
+              </button>
+            </motion.div>
+          )}
+
+          {/* Type Mode */}
+          {currentMode === 'type' && !transcribedText && (
+            <motion.div
+              key="type-mode"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">⌨️</span>
+                <span className="font-medium text-foreground">Digite seu journaling</span>
+              </div>
+              <textarea
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
+                placeholder="Pelo que você é grato hoje?"
+                className="w-full p-3 border border-border rounded-lg resize-none focus:ring-2 focus:ring-primary outline-none bg-background text-foreground"
+                rows={4}
+                autoFocus
+              />
+              
+              {/* Emoji Selector */}
+              <div className="flex gap-2 flex-wrap">
+                {moodEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
+                    className={`text-2xl p-2 rounded-lg transition-all ${
+                      selectedEmoji === emoji 
+                        ? 'bg-primary/20 scale-110' 
+                        : 'hover:bg-muted'
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCancelMode}
+                  className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={handleAddEntry}
+                  disabled={!newContent.trim()}
+                  className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                    newContent.trim() 
+                      ? 'bg-primary text-primary-foreground hover:opacity-90' 
+                      : 'bg-muted text-muted-foreground cursor-not-allowed'
+                  }`}
+                >
+                  <CheckIcon className="w-5 h-5" /> Salvar
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Draw Mode */}
+          {currentMode === 'write-draw' && !transcribedText && (
+            <motion.div
+              key="draw-mode"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">✍️</span>
+                <span className="font-medium text-foreground">Escreva seu journaling</span>
+              </div>
+              <DrawingCanvas
+                onSave={handleCanvasTranscribe}
+                onCancel={handleCancelMode}
+              />
+              {isTranscribing && (
+                <div className="mt-3 text-center text-sm text-muted-foreground">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mx-auto mb-2" />
+                  Transcrevendo sua escrita...
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Upload Mode */}
+          {currentMode === 'write-upload' && !transcribedText && (
+            <motion.div
+              key="upload-mode"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">📷</span>
+                <span className="font-medium text-foreground">Envie foto da sua escrita</span>
+              </div>
+              <ImageUpload
+                onImageSelect={handleImageTranscribe}
+                onCancel={handleCancelMode}
+                isProcessing={isTranscribing}
+              />
+            </motion.div>
+          )}
+
+          {/* Transcribed Text Review */}
+          {transcribedText && (
+            <motion.div
+              key="transcribed-review"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">✅</span>
+                <span className="font-medium text-foreground">Revise e salve seu journaling</span>
+              </div>
+              
+              <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Texto transcrito:</p>
+                <p className="text-foreground whitespace-pre-wrap">{transcribedText}</p>
+              </div>
+
+              {/* Emoji Selector */}
+              <div className="flex gap-2 flex-wrap">
+                {moodEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
+                    className={`text-2xl p-2 rounded-lg transition-all ${
+                      selectedEmoji === emoji 
+                        ? 'bg-primary/20 scale-110' 
+                        : 'hover:bg-muted'
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCancelMode}
+                  className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted"
+                >
+                  Refazer
+                </button>
+                <button
+                  onClick={handleAddEntry}
+                  className="flex-1 py-3 rounded-xl font-bold bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center gap-2"
+                >
+                  <CheckIcon className="w-5 h-5" /> Salvar
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Entries List */}
