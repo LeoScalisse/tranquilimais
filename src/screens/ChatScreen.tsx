@@ -3,6 +3,7 @@ import { ChatMessage as ChatMessageType } from '../types';
 import { playSound } from '../services/soundService';
 import { SendIcon, CopyIcon, CheckIcon, ImageIcon, SearchIcon, SparklesIcon, MessageSquareIcon, PlusIcon, TrashIcon } from '../components/ui/Icons';
 import BrandText from '../components/BrandText';
+import TranquilinhaAvatar from '@/assets/TranquilinhaAvatar.png';
 import { useChatHistory, ChatConversation, ChatMessage } from '@/hooks/useChatHistory';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -157,8 +158,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chatHistory, onSendMessage, isL
       <div className="bg-gradient-to-r from-tranquili-blue to-blue-400 p-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">
-              🤖
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+              <img src={TranquilinhaAvatar} alt="Tranquilinha" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="font-bold text-lg">Tranquilinha</h1>
