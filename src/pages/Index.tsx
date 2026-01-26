@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useMoods } from '@/hooks/useMoods';
 import { useAchievements } from '@/hooks/useAchievements';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const STORAGE_KEYS = {
@@ -133,25 +134,63 @@ const App: React.FC = () => {
       }
     });
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "Entendo como você se sente. Lembre-se: cada passo conta, mesmo os pequenos.",
-        "Obrigada por compartilhar isso comigo. Você está fazendo um ótimo trabalho cuidando de si.",
-        "É normal ter dias difíceis. O importante é que você está aqui, buscando se sentir melhor.",
-        "Que bom que você veio conversar! Como posso ajudar você a se sentir mais tranquilo hoje?",
-        "Respire fundo comigo. Inspire... e expire. Você está seguro aqui.",
-      ];
+    try {
+      // Build conversation history for AI
+      const conversationHistory = [...chatHistory, userMessage].map(m => ({
+        role: m.role === 'model' ? 'assistant' : m.role,
+        content: m.text
+      }));
+
+      // Call the chat edge function
+      const { data, error } = await supabase.functions.invoke('chat', {
+        body: {
+          messages: conversationHistory,
+          userProfile: profile ? {
+            name: profile.name,
+            path: profile.path,
+            reason: profile.reason
+          } : null
+        }
+      });
+
+      if (error) {
+        console.error('Chat error:', error);
+        throw new Error(error.message || 'Erro ao processar mensagem');
+      }
+
       const aiMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'model',
-        text: responses[Math.floor(Math.random() * responses.length)],
+        text: data?.response || 'Desculpe, não consegui processar sua mensagem. Pode tentar novamente?',
         timestamp: Date.now(),
       };
       setChatHistory(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      
+      // Check for rate limit or payment errors
+      if (error instanceof Error) {
+        if (error.message.includes('429') || error.message.includes('Muitas requisições')) {
+          toast.error('Muitas requisições. Aguarde alguns segundos.');
+        } else if (error.message.includes('402') || error.message.includes('Créditos')) {
+          toast.error('Créditos insuficientes. Entre em contato com o suporte.');
+        } else {
+          toast.error('Erro ao enviar mensagem. Tente novamente.');
+        }
+      }
+
+      // Fallback response
+      const fallbackMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'model',
+        text: 'Desculpe, estou com dificuldades no momento. Que tal tentarmos novamente em alguns instantes? 💙',
+        timestamp: Date.now(),
+      };
+      setChatHistory(prev => [...prev, fallbackMessage]);
+    } finally {
       setIsChatLoading(false);
-    }, 1500);
-  }, [user, chatHistory, moodHistory, checkAndUnlockAchievements]);
+    }
+  }, [user, chatHistory, moodHistory, profile, checkAndUnlockAchievements]);
 
   const handleNavigateTo = (screen: Screen) => {
     if (screen === Screen.News && !user) {
