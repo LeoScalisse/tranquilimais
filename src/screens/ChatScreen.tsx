@@ -107,12 +107,18 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chatHistory, onSendMessage, isL
     if (user) {
       let convId = currentConversationId;
       
-      // Create new conversation if needed
+      // Create new conversation if needed (fallback for when user starts chatting without clicking "Nova conversa")
       if (!convId) {
         const conv = await createConversation(inputValue.slice(0, 50) + '...');
         if (conv) {
           convId = conv.id;
           setCurrentConversationId(conv.id);
+        }
+      } else {
+        // Update conversation title with first message if it's still "Nova conversa"
+        const currentConv = conversations.find(c => c.id === convId);
+        if (currentConv && currentConv.title === 'Nova conversa') {
+          await updateConversationTitle(convId, inputValue.slice(0, 50) + '...');
         }
       }
 
@@ -125,11 +131,19 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chatHistory, onSendMessage, isL
     setInputValue('');
   };
 
-  const handleNewConversation = () => {
-    setCurrentConversationId(null);
+  const handleNewConversation = async () => {
     setMessages([]);
     setShowHistory(false);
-    // Clear parent chatHistory through callback would be needed
+    
+    // Create new conversation instantly if user is logged in
+    if (user) {
+      const conv = await createConversation('Nova conversa');
+      if (conv) {
+        setCurrentConversationId(conv.id);
+      }
+    } else {
+      setCurrentConversationId(null);
+    }
   };
 
   const handleLoadConversation = async (conv: ChatConversation) => {
