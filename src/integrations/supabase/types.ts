@@ -159,6 +159,7 @@ export type Database = {
       }
       moods: {
         Row: {
+          checkin_data: Json | null
           created_at: string
           id: string
           mood_level: number
@@ -166,6 +167,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          checkin_data?: Json | null
           created_at?: string
           id?: string
           mood_level: number
@@ -173,6 +175,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          checkin_data?: Json | null
           created_at?: string
           id?: string
           mood_level?: number

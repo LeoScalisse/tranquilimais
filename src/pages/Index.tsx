@@ -108,7 +108,7 @@ const App: React.FC = () => {
       showSignUp('Crie sua conta para registrar', 'Salve seu humor diário e acompanhe sua evolução');
       return;
     }
-    await addMood(mood);
+    await addMood(mood, undefined, checkinData);
   };
 
   const handleSendMessage = useCallback(async (message: string) => {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { Mood, MoodEntry } from '@/types';
+import { Mood, MoodEntry, MoodCheckinData } from '@/types';
 
 export const useMoods = () => {
   const { user } = useAuth();
@@ -29,7 +29,8 @@ export const useMoods = () => {
         id: mood.id,
         user_id: mood.user_id,
         date: mood.created_at.split('T')[0],
-        mood: getMoodFromLevel(mood.mood_level)
+        mood: getMoodFromLevel(mood.mood_level),
+        checkin_data: mood.checkin_data as unknown as MoodCheckinData | undefined
       }));
 
       setMoodHistory(formattedMoods);
@@ -44,8 +45,8 @@ export const useMoods = () => {
     fetchMoods();
   }, [fetchMoods]);
 
-  // Add a new mood
-  const addMood = async (mood: Mood, note?: string) => {
+  // Add a new mood with check-in data
+  const addMood = async (mood: Mood, note?: string, checkinData?: MoodCheckinData) => {
     if (!user) return false;
 
     const today = new Date().toISOString().split('T')[0];
@@ -56,13 +57,20 @@ export const useMoods = () => {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const insertData: any = {
+        user_id: user.id,
+        mood_level: getMoodLevel(mood),
+        note,
+      };
+      
+      if (checkinData) {
+        insertData.checkin_data = checkinData;
+      }
+
       const { error } = await supabase
         .from('moods')
-        .insert({
-          user_id: user.id,
-          mood_level: getMoodLevel(mood),
-          note
-        });
+        .insert([insertData]);
 
       if (error) throw error;
 
