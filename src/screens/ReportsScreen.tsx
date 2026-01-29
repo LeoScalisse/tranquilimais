@@ -1,9 +1,10 @@
-import React from 'react';
-import { MoodEntry, UserProfile, Achievement } from '../types';
+import React, { useState } from 'react';
+import { MoodEntry, UserProfile, Achievement, CheckinEmotion } from '../types';
 import { MOOD_EMOJIS } from '../constants';
 import { TrophyIcon, TargetIcon, CheckIcon } from '../components/ui/Icons';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Lock } from 'lucide-react';
+import { MoodMiniChart } from '../components/ui/mood-mini-chart';
+import { MoodDetailDialog } from '../components/mood/MoodDetailDialog';
 
 interface ReportsScreenProps {
   moodHistory: MoodEntry[];
@@ -12,101 +13,101 @@ interface ReportsScreenProps {
   achievements?: Achievement[];
 }
 
+const EMOTION_LABELS: Record<CheckinEmotion, string> = {
+  calmo: 'Calmo',
+  ansioso: 'Ansioso',
+  triste: 'Triste',
+  cansado: 'Cansado',
+  sobrecarregado: 'Sobrecarregado',
+  grato: 'Grato',
+  motivado: 'Motivado',
+  confuso: 'Confuso',
+  esperancoso: 'Esperançoso',
+  vazio: 'Vazio',
+};
+
+const EMOTION_EMOJIS: Record<CheckinEmotion, string> = {
+  calmo: '😌',
+  ansioso: '😰',
+  triste: '😢',
+  cansado: '😴',
+  sobrecarregado: '😵',
+  grato: '🙏',
+  motivado: '💪',
+  confuso: '🤔',
+  esperancoso: '🌟',
+  vazio: '😶',
+};
+
 const MoodSummary: React.FC<{ moodHistory: MoodEntry[] }> = ({ moodHistory }) => {
   if (moodHistory.length === 0) return null;
 
-  const moodCounts = moodHistory.reduce((acc, entry) => {
-    acc[entry.mood] = (acc[entry.mood] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Count emotions from new check-in data
+  const emotionCounts: Record<string, number> = {};
+  
+  moodHistory.forEach(entry => {
+    if (entry.checkin_data?.emotions?.length) {
+      entry.checkin_data.emotions.forEach(emotion => {
+        emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+      });
+    } else {
+      // Fallback for legacy data
+      emotionCounts[entry.mood] = (emotionCounts[entry.mood] || 0) + 1;
+    }
+  });
 
-  const sortedMoods = Object.entries(moodCounts).sort((a, b) => b[1] - a[1]);
-  const topMood = sortedMoods[0];
+  const sortedEmotions = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1]);
+  
+  if (sortedEmotions.length === 0) return null;
+  
+  const topEmotion = sortedEmotions[0];
+  const isNewFormat = Object.keys(EMOTION_LABELS).includes(topEmotion[0]);
 
   return (
     <div className="bg-card p-5 rounded-xl shadow-md mb-6 border border-border">
       <h2 className="text-lg font-bold text-foreground mb-4">Resumo do Humor</h2>
       <div className="flex items-center justify-center gap-4 mb-4">
-        <span className="text-5xl">{MOOD_EMOJIS[topMood[0] as keyof typeof MOOD_EMOJIS]}</span>
+        <span className="text-5xl">
+          {isNewFormat 
+            ? EMOTION_EMOJIS[topEmotion[0] as CheckinEmotion] 
+            : MOOD_EMOJIS[topEmotion[0] as keyof typeof MOOD_EMOJIS]}
+        </span>
         <div>
-          <p className="text-muted-foreground">Humor mais frequente</p>
-          <p className="font-bold text-xl capitalize text-foreground">{topMood[0]}</p>
+          <p className="text-muted-foreground">Sentimento mais frequente</p>
+          <p className="font-bold text-xl capitalize text-foreground">
+            {isNewFormat ? EMOTION_LABELS[topEmotion[0] as CheckinEmotion] : topEmotion[0]}
+          </p>
         </div>
       </div>
-      <div className="flex justify-around">
-        {sortedMoods.map(([mood, count]) => (
-          <div key={mood} className="text-center">
-            <span className="text-2xl">{MOOD_EMOJIS[mood as keyof typeof MOOD_EMOJIS]}</span>
-            <p className="text-sm font-bold text-muted-foreground">{count}x</p>
-          </div>
-        ))}
+      <div className="flex flex-wrap justify-around gap-2">
+        {sortedEmotions.slice(0, 5).map(([emotion, count]) => {
+          const isNew = Object.keys(EMOTION_LABELS).includes(emotion);
+          return (
+            <div key={emotion} className="text-center">
+              <span className="text-2xl">
+                {isNew 
+                  ? EMOTION_EMOJIS[emotion as CheckinEmotion]
+                  : MOOD_EMOJIS[emotion as keyof typeof MOOD_EMOJIS]}
+              </span>
+              <p className="text-sm font-bold text-muted-foreground">{count}x</p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-const MoodChart: React.FC<{ moodHistory: MoodEntry[] }> = ({ moodHistory }) => {
+const MoodChartSection: React.FC<{ moodHistory: MoodEntry[]; onMoodClick: (mood: MoodEntry) => void }> = ({ moodHistory, onMoodClick }) => {
   if (moodHistory.length === 0) return null;
 
-  const moodValues: Record<string, number> = {
-    happy: 5,
-    calm: 4,
-    neutral: 3,
-    sad: 2,
-    anxious: 1,
-  };
-
-  const last14Days = moodHistory.slice(-14);
-  const chartData = last14Days.map((entry) => ({
-    date: new Date(entry.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-    value: moodValues[entry.mood] || 3,
-    mood: entry.mood,
-  }));
-
   return (
-    <div className="bg-card p-5 rounded-xl shadow-md mb-6 border border-border">
+    <div className="mb-6">
       <h2 className="text-lg font-bold text-foreground mb-4">Evolução do Humor</h2>
-      <div className="h-48">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis 
-              dataKey="date" 
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-              axisLine={{ stroke: 'hsl(var(--border))' }}
-            />
-            <YAxis 
-              domain={[1, 5]} 
-              ticks={[1, 2, 3, 4, 5]}
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-              axisLine={{ stroke: 'hsl(var(--border))' }}
-              tickFormatter={(value) => {
-                const labels: Record<number, string> = { 1: '😰', 2: '😢', 3: '😐', 4: '😌', 5: '😊' };
-                return labels[value] || '';
-              }}
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--card))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px'
-              }}
-              formatter={(value: number) => {
-                const labels: Record<number, string> = { 1: 'Ansioso', 2: 'Triste', 3: 'Neutro', 4: 'Calmo', 5: 'Feliz' };
-                return [labels[value], 'Humor'];
-              }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="value" 
-              stroke="hsl(var(--primary))" 
-              strokeWidth={3}
-              dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <MoodMiniChart moodHistory={moodHistory} onMoodClick={onMoodClick} />
+      <p className="text-xs text-muted-foreground text-center mt-2">
+        Toque em uma barra para ver detalhes
+      </p>
     </div>
   );
 };
@@ -182,6 +183,30 @@ const AchievementsSection: React.FC<{ achievements: Achievement[] }> = ({ achiev
 };
 
 const ReportsScreen: React.FC<ReportsScreenProps> = ({ moodHistory, chatCount, userProfile, achievements = [] }) => {
+  const [selectedMood, setSelectedMood] = useState<MoodEntry | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleMoodClick = (mood: MoodEntry) => {
+    setSelectedMood(mood);
+    setDialogOpen(true);
+  };
+
+  const getDisplayEmoji = (entry: MoodEntry): string => {
+    if (entry.checkin_data?.emotions?.length) {
+      return EMOTION_EMOJIS[entry.checkin_data.emotions[0]];
+    }
+    return MOOD_EMOJIS[entry.mood];
+  };
+
+  const getDisplayLabel = (entry: MoodEntry): string => {
+    if (entry.checkin_data?.emotions?.length) {
+      return entry.checkin_data.emotions
+        .map(e => EMOTION_LABELS[e])
+        .join(', ');
+    }
+    return entry.mood;
+  };
+
   if (moodHistory.length === 0) {
     return (
       <div className="p-4 pb-28 bg-background h-full overflow-y-auto">
@@ -199,6 +224,12 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ moodHistory, chatCount, u
         {achievements.length > 0 && (
           <AchievementsSection achievements={achievements} />
         )}
+
+        <MoodDetailDialog 
+          mood={selectedMood} 
+          open={dialogOpen} 
+          onOpenChange={setDialogOpen} 
+        />
       </div>
     );
   }
@@ -208,7 +239,7 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ moodHistory, chatCount, u
       <h1 className="text-3xl font-bold mb-6 text-foreground">Sua Evolução</h1>
       
       <PurposeCard userProfile={userProfile} />
-      <MoodChart moodHistory={moodHistory} />
+      <MoodChartSection moodHistory={moodHistory} onMoodClick={handleMoodClick} />
       <MoodSummary moodHistory={moodHistory} />
       
       {achievements.length > 0 && (
@@ -218,17 +249,34 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ moodHistory, chatCount, u
       <h2 className="text-xl font-bold mb-4 text-foreground">Histórico Recente</h2>
       <div className="space-y-3">
         {[...moodHistory].reverse().slice(0, 10).map((entry, idx) => (
-          <div key={idx} className="flex items-center p-4 rounded-xl shadow-sm bg-card border-l-4 border-primary">
-            <span className="text-4xl mr-4">{MOOD_EMOJIS[entry.mood]}</span>
-            <div>
-              <p className="font-bold text-foreground capitalize">{entry.mood}</p>
+          <div 
+            key={entry.id || idx} 
+            className="flex items-center p-4 rounded-xl shadow-sm bg-card border-l-4 border-primary cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => handleMoodClick(entry)}
+          >
+            <span className="text-4xl mr-4">{getDisplayEmoji(entry)}</span>
+            <div className="flex-1">
+              <p className="font-bold text-foreground capitalize">{getDisplayLabel(entry)}</p>
               <p className="text-xs text-muted-foreground">
                 {new Date(entry.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
               </p>
             </div>
+            {entry.checkin_data?.intensity && (
+              <span className="text-xs px-2 py-1 rounded-full bg-secondary text-muted-foreground">
+                {entry.checkin_data.intensity === 'leve' && '🙂 Leve'}
+                {entry.checkin_data.intensity === 'moderado' && '😐 Moderado'}
+                {entry.checkin_data.intensity === 'intenso' && '⚡ Intenso'}
+              </span>
+            )}
           </div>
         ))}
       </div>
+
+      <MoodDetailDialog 
+        mood={selectedMood} 
+        open={dialogOpen} 
+        onOpenChange={setDialogOpen} 
+      />
     </div>
   );
 };
