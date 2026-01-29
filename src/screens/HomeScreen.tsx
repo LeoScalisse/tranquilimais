@@ -80,7 +80,7 @@ const WellnessTipCard: React.FC<{
   );
 };
 
-const GratitudeJournal: React.FC = () => {
+const GratitudeJournal: React.FC<{ onSaved?: () => void }> = ({ onSaved }) => {
   const [entry, setEntry] = useState('');
   const [savedToday, setSavedToday] = useState<string | null>(null);
 
@@ -120,6 +120,11 @@ const GratitudeJournal: React.FC = () => {
     localStorage.setItem(GRATITUDE_STORAGE_KEY, JSON.stringify(allEvents));
     setSavedToday(entry);
     setEntry('');
+    
+    // Navigate to Gratitude screen after saving
+    if (onSaved) {
+      setTimeout(() => onSaved(), 300);
+    }
   };
 
   if (savedToday) {
@@ -291,7 +296,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
       </div>
 
-      <GratitudeJournal />
+      <GratitudeJournal onSaved={() => navigateTo(Screen.Gratitude)} />
 
       <BentoGrid className="grid-cols-2 lg:grid-cols-3 auto-rows-[140px] lg:auto-rows-[180px]">
         <BentoCard
