@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserProfile, Screen, Mood, MoodEntry, AppSettings, ChatMessage } from '../types';
+import { UserProfile, Screen, Mood, MoodEntry, AppSettings, ChatMessage, MoodCheckinData } from '../types';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ChatScreen from '../screens/ChatScreen';
@@ -103,7 +103,7 @@ const App: React.FC = () => {
     setShowSignUpDialog(true);
   };
 
-  const handleMoodSelect = async (mood: Mood) => {
+  const handleMoodSelect = async (mood: Mood, checkinData?: MoodCheckinData) => {
     if (!user) {
       showSignUp('Crie sua conta para registrar', 'Salve seu humor diário e acompanhe sua evolução');
       return;

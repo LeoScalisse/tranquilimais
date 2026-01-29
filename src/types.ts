@@ -1,10 +1,42 @@
 export type Mood = 'happy' | 'calm' | 'neutral' | 'sad' | 'anxious';
 
+// New mood check-in types
+export type CheckinEmotion = 
+  | 'calmo' 
+  | 'ansioso' 
+  | 'triste' 
+  | 'cansado' 
+  | 'sobrecarregado' 
+  | 'grato' 
+  | 'motivado' 
+  | 'confuso' 
+  | 'esperancoso' 
+  | 'vazio';
+
+export type CheckinIntensity = 'leve' | 'moderado' | 'intenso';
+
+export type CheckinInfluencer = 
+  | 'corpo' 
+  | 'pensamentos' 
+  | 'pessoas' 
+  | 'trabalho' 
+  | 'redes_sociais' 
+  | 'nada_especifico'
+  | 'custom';
+
+export interface MoodCheckinData {
+  emotions: CheckinEmotion[];
+  intensity?: CheckinIntensity;
+  influencer?: CheckinInfluencer;
+  customInfluencer?: string;
+}
+
 export interface MoodEntry {
   id?: string;
   user_id?: string;
   date: string;
   mood: Mood;
+  checkin_data?: MoodCheckinData;
 }
 
 export interface UserProfile {
