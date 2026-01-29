@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserProfile, MoodEntry, Mood, Screen, WellnessTipData } from '../types';
+import { UserProfile, MoodEntry, Mood, Screen, WellnessTipData, MoodCheckinData } from '../types';
 import { MOOD_OPTIONS, MOOD_EMOJIS, MOOD_HEX_COLORS, WELLNESS_TIPS, ICON_SETS } from '../constants';
 import { playSound } from '../services/soundService';
 import { RefreshCwIcon, MenuIcon } from '../components/ui/Icons';
 import BrandText from '../components/BrandText';
 import { BentoCard, BentoGrid } from '../components/ui/bento-grid';
-import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper } from 'lucide-react';
+import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper, Sparkles } from 'lucide-react';
 import PWAInstallPrompt from '../components/PWAInstallPrompt';
-
+import MoodCheckin from '../components/mood/MoodCheckin';
+import { AnimatePresence } from 'framer-motion';
 interface HomeScreenProps {
   userProfile: UserProfile;
   moodHistory: MoodEntry[];
-  onMoodSelect: (mood: Mood) => void;
+  onMoodSelect: (mood: Mood, checkinData?: MoodCheckinData) => void;
   navigateTo: (screen: Screen) => void;
   onOpenSideMenu: () => void;
 }
@@ -172,8 +173,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const [isTipLoading, setIsTipLoading] = useState(true);
   const [dailyRefreshCount, setDailyRefreshCount] = useState(0);
   const [greeting, setGreeting] = useState('');
-  const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
-  const [explodingMood, setExplodingMood] = useState<Mood | null>(null);
+  const [showMoodCheckin, setShowMoodCheckin] = useState(false);
 
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   const hasLoggedMoodToday = moodHistory.some((entry) => entry.date === today);
@@ -217,13 +217,31 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     fetchTip(false);
   }, [userProfile?.name, today]);
 
-  const handleMoodSelection = (mood: Mood) => {
-    if (selectedMood) return;
+  const handleOpenMoodCheckin = () => {
     playSound('select');
-    setSelectedMood(mood);
-    setExplodingMood(mood);
-    setTimeout(() => onMoodSelect(mood), 400);
-    setTimeout(() => setExplodingMood(null), 600);
+    setShowMoodCheckin(true);
+  };
+
+  const handleMoodCheckinComplete = (checkinData: MoodCheckinData, _aiResponse: string) => {
+    // Map the first emotion to a legacy mood for backwards compatibility
+    const emotionToMood: Record<string, Mood> = {
+      'calmo': 'calm',
+      'ansioso': 'anxious',
+      'triste': 'sad',
+      'cansado': 'sad',
+      'sobrecarregado': 'anxious',
+      'grato': 'happy',
+      'motivado': 'happy',
+      'confuso': 'neutral',
+      'esperancoso': 'happy',
+      'vazio': 'sad',
+    };
+    
+    const primaryEmotion = checkinData.emotions[0] || 'calmo';
+    const legacyMood = emotionToMood[primaryEmotion] || 'neutral';
+    
+    onMoodSelect(legacyMood, checkinData);
+    setShowMoodCheckin(false);
   };
 
   return (
@@ -264,37 +282,32 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             <p className="text-5xl">{MOOD_EMOJIS[moodHistory.find((e) => e.date === today)!.mood]}</p>
           </div>
         ) : (
-          <div className="bg-white p-4 rounded-xl shadow-md">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3 text-center">
-              Como você está se sentindo hoje?
-            </h2>
-            <div className="flex justify-around">
-              {MOOD_OPTIONS.map((mood) => (
-                <button
-                  key={mood}
-                  onClick={() => handleMoodSelection(mood)}
-                  disabled={!!selectedMood}
-                  className={`flex flex-col items-center space-y-1 transition-transform duration-300 transform ${
-                    selectedMood === mood ? 'scale-125' : 'hover:scale-110'
-                  }`}
-                >
-                  <div className={`explosion-container ${explodingMood === mood ? 'exploding' : ''}`}>
-                    <span className="text-4xl">{MOOD_EMOJIS[mood]}</span>
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="particle"
-                        style={{ backgroundColor: MOOD_HEX_COLORS[mood] }}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs capitalize text-gray-500">{mood}</span>
-                </button>
-              ))}
+          <button
+            onClick={handleOpenMoodCheckin}
+            className="w-full bg-gradient-to-br from-primary/90 to-blue-500 p-6 rounded-xl shadow-lg text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Sparkles className="w-6 h-6" />
+              <h2 className="text-lg font-semibold">
+                Como você está se sentindo agora?
+              </h2>
             </div>
-          </div>
+            <p className="text-sm text-white/80">
+              Toque para fazer seu check-in emocional
+            </p>
+          </button>
         )}
       </div>
+
+      {/* Mood Checkin Modal */}
+      <AnimatePresence>
+        {showMoodCheckin && (
+          <MoodCheckin
+            onComplete={handleMoodCheckinComplete}
+            onClose={() => setShowMoodCheckin(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <GratitudeJournal onSaved={() => navigateTo(Screen.Gratitude)} />
 
