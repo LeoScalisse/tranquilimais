@@ -132,18 +132,17 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chatHistory, onSendMessage, isL
   };
 
   const handleNewConversation = async () => {
-    // Immediately clear UI state for instant feedback
-    setDisplayMessages([]);
     setMessages([]);
-    setCurrentConversationId(null);
     setShowHistory(false);
     
-    // Create new conversation in background if user is logged in
+    // Create new conversation instantly if user is logged in
     if (user) {
       const conv = await createConversation('Nova conversa');
       if (conv) {
         setCurrentConversationId(conv.id);
       }
+    } else {
+      setCurrentConversationId(null);
     }
   };
 
