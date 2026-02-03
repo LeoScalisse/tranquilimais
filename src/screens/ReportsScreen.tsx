@@ -5,7 +5,7 @@ import { TrophyIcon, TargetIcon, CheckIcon } from '../components/ui/Icons';
 import { Lock } from 'lucide-react';
 import { MoodMiniChart } from '../components/ui/mood-mini-chart';
 import { MoodDetailDialog } from '../components/mood/MoodDetailDialog';
-
+import WeeksOfLife from '../components/reports/WeeksOfLife';
 interface ReportsScreenProps {
   moodHistory: MoodEntry[];
   chatCount: number;
@@ -239,6 +239,7 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ moodHistory, chatCount, u
       <h1 className="text-3xl font-bold mb-6 text-foreground">Sua Evolução</h1>
       
       <PurposeCard userProfile={userProfile} />
+      <WeeksOfLife />
       <MoodChartSection moodHistory={moodHistory} onMoodClick={handleMoodClick} />
       <MoodSummary moodHistory={moodHistory} />
       
