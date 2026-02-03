@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, Loader2 } from 'lucide-react';
+import { X, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import { CheckinEmotion, CheckinIntensity, CheckinInfluencer, MoodCheckinData } from '@/types';
 import { cn } from '@/lib/utils';
 import { playSound } from '@/services/soundService';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
 import ReactMarkdown from 'react-markdown';
-import tranquiliIcon from '@/assets/tranquili-icon.png';
 
 interface MoodCheckinProps {
   onComplete: (data: MoodCheckinData, aiResponse: string) => void;
@@ -320,8 +319,8 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
             ) : (
               <>
                 <div className="flex justify-center">
-                  <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center">
-                    <img src={tranquiliIcon} alt="Tranquili+" className="w-full h-full object-cover" />
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-blue-400 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-white" />
                   </div>
                 </div>
 
