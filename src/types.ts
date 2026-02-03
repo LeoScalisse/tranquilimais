@@ -15,6 +15,8 @@ export type CheckinEmotion =
 
 export type CheckinIntensity = 'leve' | 'moderado' | 'intenso';
 
+export type CheckinMedal = 'ouro' | 'prata' | 'bronze';
+
 export type CheckinInfluencer = 
   | 'corpo' 
   | 'pensamentos' 
@@ -29,6 +31,7 @@ export interface MoodCheckinData {
   intensity?: CheckinIntensity;
   influencer?: CheckinInfluencer;
   customInfluencer?: string;
+  medal?: CheckinMedal;
 }
 
 export interface MoodEntry {
