@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MoodEntry, CheckinEmotion, CheckinIntensity, CheckinInfluencer } from '@/types';
+import { MoodEntry, CheckinEmotion, CheckinIntensity, CheckinInfluencer, CheckinMedal } from '@/types';
 import { MOOD_EMOJIS } from '@/constants';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +27,12 @@ const INTENSITY_CONFIG: Record<CheckinIntensity, { label: string; emoji: string;
   leve: { label: 'Leve', emoji: '🙂', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
   moderado: { label: 'Moderado', emoji: '😐', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
   intenso: { label: 'Intenso', emoji: '⚡', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+};
+
+const MEDAL_CONFIG: Record<CheckinMedal, { label: string; emoji: string; color: string }> = {
+  ouro: { label: 'Dia Ouro', emoji: '🥇', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  prata: { label: 'Dia Prata', emoji: '🥈', color: 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400' },
+  bronze: { label: 'Dia Bronze', emoji: '🥉', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' },
 };
 
 const INFLUENCER_CONFIG: Record<CheckinInfluencer, { label: string; emoji: string }> = {
@@ -94,6 +100,29 @@ export const MoodDetailDialog: React.FC<MoodDetailDialogProps> = ({ mood, open, 
                   <div>
                     {(() => {
                       const config = INTENSITY_CONFIG[mood.checkin_data!.intensity!];
+                      return (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
+                            config.color
+                          )}
+                        >
+                          <span>{config.emoji}</span>
+                          <span>{config.label}</span>
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Medal */}
+              {mood.checkin_data!.medal && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Avaliação do dia</h3>
+                  <div>
+                    {(() => {
+                      const config = MEDAL_CONFIG[mood.checkin_data!.medal!];
                       return (
                         <span
                           className={cn(

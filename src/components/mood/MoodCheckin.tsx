@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, Loader2 } from 'lucide-react';
-import { CheckinEmotion, CheckinIntensity, CheckinInfluencer, MoodCheckinData } from '@/types';
+import { CheckinEmotion, CheckinIntensity, CheckinInfluencer, CheckinMedal, MoodCheckinData } from '@/types';
 import { cn } from '@/lib/utils';
 import { playSound } from '@/services/soundService';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,17 +42,24 @@ const INFLUENCERS: { id: CheckinInfluencer; emoji: string; label: string }[] = [
   { id: 'nada_especifico', emoji: '🤷', label: 'Nada específico' },
 ];
 
+const MEDALS: { id: CheckinMedal; emoji: string; label: string; description: string }[] = [
+  { id: 'ouro', emoji: '🥇', label: 'Ouro', description: 'Dia incrível!' },
+  { id: 'prata', emoji: '🥈', label: 'Prata', description: 'Dia ok' },
+  { id: 'bronze', emoji: '🥉', label: 'Bronze', description: 'Dia difícil' },
+];
+
 const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
   const [step, setStep] = useState(1);
   const [selectedEmotions, setSelectedEmotions] = useState<CheckinEmotion[]>([]);
   const [selectedIntensity, setSelectedIntensity] = useState<CheckinIntensity | null>(null);
   const [selectedInfluencer, setSelectedInfluencer] = useState<CheckinInfluencer | null>(null);
   const [customInfluencer, setCustomInfluencer] = useState('');
+  const [selectedMedal, setSelectedMedal] = useState<CheckinMedal | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const { profile } = useProfile();
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const handleEmotionToggle = (emotion: CheckinEmotion) => {
     playSound('select');
@@ -80,9 +87,14 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
     }
   };
 
+  const handleMedalSelect = (medal: CheckinMedal) => {
+    playSound('select');
+    setSelectedMedal(medal);
+  };
+
   const handleSkip = () => {
     playSound('toggle');
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1);
     } else {
       generateAIResponse();
@@ -91,7 +103,7 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
 
   const handleContinue = () => {
     playSound('confirm');
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1);
     } else {
       generateAIResponse();
@@ -99,7 +111,7 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
   };
 
   const generateAIResponse = async () => {
-    setStep(4);
+    setStep(5);
     setIsLoading(true);
 
     const checkinData: MoodCheckinData = {
@@ -107,6 +119,7 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
       intensity: selectedIntensity || undefined,
       influencer: selectedInfluencer || undefined,
       customInfluencer: customInfluencer || undefined,
+      medal: selectedMedal || undefined,
     };
 
     try {
@@ -160,6 +173,7 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
       intensity: selectedIntensity || undefined,
       influencer: selectedInfluencer || undefined,
       customInfluencer: customInfluencer || undefined,
+      medal: selectedMedal || undefined,
     };
     onComplete(checkinData, aiResponse || '');
   };
@@ -168,6 +182,7 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
     if (step === 1) return selectedEmotions.length > 0;
     if (step === 2) return selectedIntensity !== null;
     if (step === 3) return selectedInfluencer !== null;
+    if (step === 4) return selectedMedal !== null;
     return true;
   };
 
@@ -308,6 +323,48 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
       case 4:
         return (
           <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                Como você avalia seu dia?
+              </h2>
+              <p className="text-sm text-gray-500">
+                Dê uma medalha para o seu dia
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {MEDALS.map((medal) => (
+                <button
+                  key={medal.id}
+                  onClick={() => handleMedalSelect(medal.id)}
+                  className={cn(
+                    "w-full flex items-center justify-between p-5 rounded-xl border-2 transition-all duration-200",
+                    selectedMedal === medal.id
+                      ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-4xl">{medal.emoji}</span>
+                    <div className="text-left">
+                      <span className="text-lg font-medium text-gray-700 block">{medal.label}</span>
+                      <span className="text-sm text-gray-500">{medal.description}</span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        );
+
+      case 5:
+        return (
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="space-y-6 text-center"
@@ -363,9 +420,9 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            {step < 4 && (
+            {step < 5 && (
               <>
-                {[1, 2, 3].map((s) => (
+                {[1, 2, 3, 4].map((s) => (
                   <div
                     key={s}
                     className={cn(
@@ -392,8 +449,8 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
           </AnimatePresence>
         </div>
 
-        {/* Footer - only show for steps 1-3 */}
-        {step < 4 && (
+        {/* Footer - only show for steps 1-4 */}
+        {step < 5 && (
           <div className="p-4 border-t border-gray-100 flex items-center justify-between">
             <button
               onClick={handleSkip}
@@ -411,7 +468,7 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               )}
             >
-              {step === 3 ? 'Finalizar' : 'Continuar'}
+              {step === 4 ? 'Finalizar' : 'Continuar'}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

@@ -47,6 +47,18 @@ const INTENSITY_LABELS: Record<string, string> = {
   intenso: "Intenso",
 }
 
+const MEDAL_VALUES: Record<string, number> = {
+  ouro: 100,
+  prata: 66,
+  bronze: 33,
+}
+
+const MEDAL_LABELS: Record<string, string> = {
+  ouro: "🥇 Ouro",
+  prata: "🥈 Prata",
+  bronze: "🥉 Bronze",
+}
+
 // Fallback mood values for legacy data
 const LEGACY_MOOD_VALUES: Record<string, number> = {
   happy: 100,
@@ -69,9 +81,10 @@ export function MoodMiniChart({ moodHistory, onMoodClick }: MoodMiniChartProps) 
     if (hoveredIndex !== null && last7[hoveredIndex]) {
       const entry = last7[hoveredIndex]
       if (entry.checkin_data?.emotions?.length) {
+        const medalLabel = entry.checkin_data.medal ? MEDAL_LABELS[entry.checkin_data.medal] : ""
         setDisplayData({
           emotion: entry.checkin_data.emotions.map(e => EMOTION_LABELS[e] || e).join(", "),
-          intensity: entry.checkin_data.intensity ? INTENSITY_LABELS[entry.checkin_data.intensity] : "",
+          intensity: medalLabel || (entry.checkin_data.intensity ? INTENSITY_LABELS[entry.checkin_data.intensity] : ""),
         })
       } else {
         setDisplayData({
@@ -92,6 +105,10 @@ export function MoodMiniChart({ moodHistory, onMoodClick }: MoodMiniChartProps) 
   }
 
   const getBarHeight = (entry: MoodEntry): number => {
+    // Priority: medal > intensity > legacy mood
+    if (entry.checkin_data?.medal) {
+      return MEDAL_VALUES[entry.checkin_data.medal] || 50
+    }
     if (entry.checkin_data?.intensity) {
       return INTENSITY_VALUES[entry.checkin_data.intensity] || 50
     }
