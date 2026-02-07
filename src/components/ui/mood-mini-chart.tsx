@@ -117,10 +117,18 @@ export function MoodMiniChart({ moodHistory, onMoodClick }: MoodMiniChartProps) 
   }
 
   const getBarColor = (entry: MoodEntry): string => {
+    // Priority: medal color > emotion color > legacy
+    if (entry.checkin_data?.medal) {
+      const medalColors: Record<string, string> = {
+        ouro: "from-yellow-300 to-yellow-500",
+        prata: "from-slate-300 to-slate-400",
+        bronze: "from-amber-600 to-amber-800",
+      }
+      return medalColors[entry.checkin_data.medal] || "from-primary to-primary/80"
+    }
     if (entry.checkin_data?.emotions?.length) {
       return EMOTION_COLORS[entry.checkin_data.emotions[0]] || "from-primary to-primary/80"
     }
-    // Fallback for legacy moods
     const legacyColors: Record<string, string> = {
       happy: "from-yellow-400 to-yellow-600",
       calm: "from-emerald-400 to-emerald-600",
