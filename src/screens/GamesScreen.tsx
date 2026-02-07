@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { playSound } from '../services/soundService';
 import { ArrowLeftIcon, InfoIcon, SparklesIcon, XIcon } from '../components/ui/Icons';
 import ConnectDotsGame from '../components/games/ConnectDotsGame';
+import PettinessMeterGame from '../components/games/PettinessMeterGame';
 
-type GameType = 'memory' | 'sequence' | 'mindfulness' | 'connectdots' | null;
+type GameType = 'memory' | 'sequence' | 'mindfulness' | 'connectdots' | 'pettiness' | null;
 type Difficulty = 'easy' | 'medium' | 'hard';
 
 interface CardType {
@@ -454,6 +455,7 @@ const GamesScreen: React.FC = () => {
     { id: 'sequence' as GameType, emoji: '🎵', title: 'Neuro-Sequência', description: 'Memorize e repita' },
     { id: 'mindfulness' as GameType, emoji: '🧘', title: '5 Sentidos', description: 'Exercício de mindfulness' },
     { id: 'connectdots' as GameType, emoji: '🔵', title: 'Connect the Dots', description: 'Conecte 4 e vença a IA!' },
+    { id: 'pettiness' as GameType, emoji: '💭', title: 'Medidor de Chatices', description: 'Desabafe sem julgamentos!' },
   ];
 
   if (selectedGame === 'memory') {
@@ -484,6 +486,14 @@ const GamesScreen: React.FC = () => {
     return (
       <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
         <ConnectDotsGame onBack={() => setSelectedGame(null)} />
+      </div>
+    );
+  }
+
+  if (selectedGame === 'pettiness') {
+    return (
+      <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
+        <PettinessMeterGame onBack={() => setSelectedGame(null)} />
       </div>
     );
   }
