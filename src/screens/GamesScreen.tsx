@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { playSound } from '../services/soundService';
 import { ArrowLeftIcon, InfoIcon, SparklesIcon, XIcon } from '../components/ui/Icons';
+import ConnectDotsGame from '../components/games/ConnectDotsGame';
 
-type GameType = 'memory' | 'sequence' | 'mindfulness' | null;
+type GameType = 'memory' | 'sequence' | 'mindfulness' | 'connectdots' | null;
 type Difficulty = 'easy' | 'medium' | 'hard';
 
 interface CardType {
@@ -452,6 +453,7 @@ const GamesScreen: React.FC = () => {
     { id: 'memory' as GameType, emoji: '🧠', title: 'Jogo da Memória', description: 'Encontre os pares!' },
     { id: 'sequence' as GameType, emoji: '🎵', title: 'Neuro-Sequência', description: 'Memorize e repita' },
     { id: 'mindfulness' as GameType, emoji: '🧘', title: '5 Sentidos', description: 'Exercício de mindfulness' },
+    { id: 'connectdots' as GameType, emoji: '🔵', title: 'Connect the Dots', description: 'Conecte 4 e vença a IA!' },
   ];
 
   if (selectedGame === 'memory') {
@@ -474,6 +476,14 @@ const GamesScreen: React.FC = () => {
     return (
       <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
         <MindfulnessGame onBack={() => setSelectedGame(null)} />
+      </div>
+    );
+  }
+
+  if (selectedGame === 'connectdots') {
+    return (
+      <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
+        <ConnectDotsGame onBack={() => setSelectedGame(null)} />
       </div>
     );
   }
