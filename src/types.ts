@@ -67,6 +67,7 @@ export enum Screen {
   Settings = 'settings',
   News = 'news',
   Gratitude = 'gratitude',
+  Habits = 'habits',
 }
 
 export enum ChatMode {

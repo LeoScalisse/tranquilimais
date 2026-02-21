@@ -31,6 +31,7 @@ const SideMenu: React.FC<SideMenuProps> = ({
     { screen: Screen.Home, icon: icons.home, label: 'Início' },
     { screen: Screen.Chat, icon: icons.chat, label: 'Tranquilinha IA' },
     { screen: Screen.Gratitude, icon: icons.gratitude, label: 'Diário de Gratidão' },
+    { screen: Screen.Habits, icon: '📅', label: 'Meus Hábitos' },
     { screen: Screen.News, icon: icons.news, label: 'Notícias' },
     { screen: Screen.Games, icon: icons.games, label: 'Jogos' },
     { screen: Screen.Reports, icon: icons.reports, label: 'Minha Evolução' },

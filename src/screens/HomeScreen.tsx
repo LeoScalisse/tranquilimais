@@ -5,7 +5,7 @@ import { playSound } from '../services/soundService';
 import { RefreshCwIcon, MenuIcon } from '../components/ui/Icons';
 import BrandText from '../components/BrandText';
 import { BentoCard, BentoGrid } from '../components/ui/bento-grid';
-import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper } from 'lucide-react';
+import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper, CalendarCheck } from 'lucide-react';
 import PWAInstallPrompt from '../components/PWAInstallPrompt';
 import MoodCheckin from '../components/mood/MoodCheckin';
 import { AnimatePresence } from 'framer-motion';
@@ -255,7 +255,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         playSound('select');
         navigateTo(Screen.Gratitude);
       }} cta="Acessar" />
-        <BentoCard name="Notícias" className="col-span-2 lg:col-span-1 bg-gradient-to-br from-sky-400 to-cyan-400" background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />} Icon={Newspaper} description="" onClick={() => {
+        <BentoCard name="Hábitos" className="col-span-1 lg:col-span-1 bg-gradient-to-br from-teal-400 to-emerald-500" background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />} Icon={CalendarCheck} description="" onClick={() => {
+        playSound('select');
+        navigateTo(Screen.Habits);
+      }} cta="Registrar" />
+        <BentoCard name="Notícias" className="col-span-1 lg:col-span-1 bg-gradient-to-br from-sky-400 to-cyan-400" background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />} Icon={Newspaper} description="" onClick={() => {
         playSound('select');
         navigateTo(Screen.News);
       }} cta="Ler mais" />

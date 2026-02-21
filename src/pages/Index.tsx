@@ -8,6 +8,7 @@ import ReportsScreen from '../screens/ReportsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import NewsScreen from '../screens/NewsScreen';
 import GratitudeScreen from '../screens/GratitudeScreen';
+import HabitsScreen from '../screens/HabitsScreen';
 import BottomNav from '../components/BottomNav';
 import SideMenu from '../components/SideMenu';
 import SignUpDialog from '../components/SignUpDialog';
@@ -286,6 +287,8 @@ const App: React.FC = () => {
         return <NewsScreen />;
       case Screen.Gratitude:
         return <GratitudeScreen />;
+      case Screen.Habits:
+        return <HabitsScreen />;
       default:
         return <HomeScreen userProfile={userProfile} moodHistory={user ? moodHistory : []} onMoodSelect={handleMoodSelect} navigateTo={handleNavigateTo} onOpenSideMenu={() => setIsSideMenuOpen(true)} />;
     }
