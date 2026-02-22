@@ -333,7 +333,7 @@ const NewsScreen: React.FC = () => {
 
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4">
             <p className="text-sm text-muted-foreground">
-              🌍 Acontecimentos genuinamente bons que estão transformando o mundo — mas que quase ninguém fica sabendo.
+              🌍 Acontecimentos genuinamente bons que estão transformando o mundo, mas que quase ninguém fica sabendo.
             </p>
           </div>
 
