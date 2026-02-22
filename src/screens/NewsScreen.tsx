@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink, RefreshCw, Search, Bookmark } from 'lucide-react';
+import { ExternalLink, RefreshCw, Search, Bookmark, Sparkles } from 'lucide-react';
 import AnimatedLoadingSkeleton from '../components/ui/animated-loading-skeleton';
 import { newsApi, NewsArticle } from '@/lib/api/news';
 import { useToast } from '@/hooks/use-toast';
@@ -331,13 +331,65 @@ const NewsScreen: React.FC = () => {
             />
           </div>
 
+          {/* Notícia do Dia - Featured highlight */}
+          {!searchQuery && filteredArticles.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              onClick={() => handleOpenArticle(filteredArticles[0].url)}
+              className="relative mb-6 rounded-2xl overflow-hidden border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-accent/10 shadow-lg cursor-pointer group hover:shadow-xl hover:border-primary/50 transition-all"
+            >
+              <div className="absolute top-3 left-3 z-10">
+                <span className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-bold shadow-md">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Notícia do Dia
+                </span>
+              </div>
+              {user && (
+                <button
+                  onClick={(e) => handleToggleSave(filteredArticles[0], e)}
+                  className={`absolute top-3 right-3 z-10 p-2 rounded-full transition-colors ${
+                    isNewsSaved(filteredArticles[0].url)
+                      ? 'bg-primary/20 text-primary'
+                      : 'bg-background/80 hover:bg-muted text-muted-foreground'
+                  }`}
+                >
+                  <Bookmark className="h-4 w-4" fill={isNewsSaved(filteredArticles[0].url) ? 'currentColor' : 'none'} />
+                </button>
+              )}
+              <div className="p-5 pt-12">
+                <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                  {filteredArticles[0].title}
+                </h3>
+                <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+                  {filteredArticles[0].description}
+                </p>
+                <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                  <span className="text-xs text-muted-foreground">
+                    📍 {filteredArticles[0].source}
+                  </span>
+                  <span className="text-xs text-primary font-semibold flex items-center gap-1">
+                    Ler mais <ExternalLink className="h-3 w-3" />
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4">
             <p className="text-sm text-muted-foreground">
               🌍 Acontecimentos genuinamente bons que estão transformando o mundo, mas que quase ninguém fica sabendo.
             </p>
           </div>
 
-          {renderArticleGrid(filteredArticles)}
+          {/* Remaining articles (skip first since it's featured) */}
+          {(() => {
+            const remaining = !searchQuery && filteredArticles.length > 1
+              ? filteredArticles.slice(1)
+              : filteredArticles;
+            return renderArticleGrid(remaining);
+          })()}
         </TabsContent>
 
         {/* === SALVOS === */}

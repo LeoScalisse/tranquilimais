@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       'Estudos-Meditação': 'estudos científicos meditação mindfulness atenção plena benefícios cérebro pesquisa',
       'Estudos-Saúde Mental': 'estudos científicos saúde mental psicologia terapia bem-estar emocional pesquisa',
       // Main: Boas Notícias — genuinely good world news few people know about
-      'Boas Notícias': 'boas notícias mundo avanços positivos progresso humanidade conquistas meio ambiente tecnologia social solidariedade descobertas -violência -crime -tragédia -morte',
+      'Boas Notícias': 'boas notícias reais mundo animais salvos extinção espécies recuperadas melhoria sociedade avanço país progresso ambiental energia renovável reflorestamento redução pobreza conquista humanitária descoberta científica positiva solidariedade -violência -crime -tragédia -morte -guerra',
     };
 
     const searchQuery = categoryQueries[category] || categoryQueries['Estudos'];
