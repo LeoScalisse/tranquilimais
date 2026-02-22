@@ -1,12 +1,16 @@
 import React from 'react';
 import { Mood } from './types';
 
-export const MOOD_OPTIONS: Mood[] = ['happy', 'calm', 'neutral', 'sad', 'anxious'];
+export const MOOD_OPTIONS: Mood[] = ['happy', 'calm', 'excited', 'grateful', 'loved', 'neutral', 'tired', 'sad', 'anxious'];
 
 export const MOOD_EMOJIS: Record<Mood, string> = {
   happy: '😊',
   calm: '😌',
+  excited: '🤩',
+  grateful: '🙏',
+  loved: '🥰',
   neutral: '😐',
+  tired: '😴',
   sad: '😢',
   anxious: '😟',
 };
@@ -14,7 +18,11 @@ export const MOOD_EMOJIS: Record<Mood, string> = {
 export const MOOD_COLORS: Record<Mood, string> = {
   happy: 'bg-yellow-300',
   calm: 'bg-blue-300',
+  excited: 'bg-orange-300',
+  grateful: 'bg-amber-300',
+  loved: 'bg-pink-300',
   neutral: 'bg-gray-300',
+  tired: 'bg-slate-300',
   sad: 'bg-indigo-300',
   anxious: 'bg-purple-300',
 };
@@ -22,7 +30,11 @@ export const MOOD_COLORS: Record<Mood, string> = {
 export const MOOD_HEX_COLORS: Record<Mood, string> = {
   happy: '#FDE047',
   calm: '#93C5FD',
+  excited: '#FDBA74',
+  grateful: '#FCD34D',
+  loved: '#F9A8D4',
   neutral: '#D1D5DB',
+  tired: '#CBD5E1',
   sad: '#A5B4FC',
   anxious: '#C4B5FD',
 };

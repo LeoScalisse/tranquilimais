@@ -24,6 +24,12 @@ const EMOTION_LABELS: Record<CheckinEmotion, string> = {
   confuso: 'Confuso',
   esperancoso: 'Esperançoso',
   vazio: 'Vazio',
+  feliz: 'Feliz',
+  animado: 'Animado',
+  amado: 'Amado',
+  aliviado: 'Aliviado',
+  orgulhoso: 'Orgulhoso',
+  inspirado: 'Inspirado',
 };
 
 const EMOTION_EMOJIS: Record<CheckinEmotion, string> = {
@@ -37,6 +43,12 @@ const EMOTION_EMOJIS: Record<CheckinEmotion, string> = {
   confuso: '🤔',
   esperancoso: '🌟',
   vazio: '😶',
+  feliz: '😊',
+  animado: '🤩',
+  amado: '🥰',
+  aliviado: '😮‍💨',
+  orgulhoso: '😤',
+  inspirado: '✨',
 };
 
 const MoodSummary: React.FC<{ moodHistory: MoodEntry[] }> = ({ moodHistory }) => {

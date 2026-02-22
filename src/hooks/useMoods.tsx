@@ -90,8 +90,12 @@ export const useMoods = () => {
 const getMoodLevel = (mood: Mood): number => {
   const levels: Record<Mood, number> = {
     happy: 5,
+    excited: 5,
+    grateful: 5,
+    loved: 5,
     calm: 4,
     neutral: 3,
+    tired: 2,
     sad: 2,
     anxious: 1
   };

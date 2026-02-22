@@ -181,13 +181,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       'calmo': 'calm',
       'ansioso': 'anxious',
       'triste': 'sad',
-      'cansado': 'sad',
+      'cansado': 'tired',
       'sobrecarregado': 'anxious',
-      'grato': 'happy',
-      'motivado': 'happy',
+      'grato': 'grateful',
+      'motivado': 'excited',
       'confuso': 'neutral',
       'esperancoso': 'happy',
-      'vazio': 'sad'
+      'vazio': 'sad',
+      'feliz': 'happy',
+      'animado': 'excited',
+      'amado': 'loved',
+      'aliviado': 'calm',
+      'orgulhoso': 'happy',
+      'inspirado': 'excited',
     };
     const primaryEmotion = checkinData.emotions[0] || 'calmo';
     const legacyMood = emotionToMood[primaryEmotion] || 'neutral';
@@ -243,10 +249,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         playSound('select');
         navigateTo(Screen.Chat);
       }} cta="Acessar" />
-        <BentoCard name="Games" className="col-span-1 lg:col-span-1 bg-gradient-to-br from-purple-400 to-pink-400" background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />} Icon={Gamepad2} description="" onClick={() => {
+        <BentoCard name="Academia Mental" className="col-span-1 lg:col-span-1 bg-gradient-to-br from-purple-400 to-pink-400" background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />} Icon={Gamepad2} description="" onClick={() => {
         playSound('select');
         navigateTo(Screen.Games);
-      }} cta="Jogar" />
+      }} cta="Exercitar" />
         <BentoCard name="Evolução" className="col-span-1 lg:col-span-1 bg-gradient-to-br from-green-400 to-emerald-400" background={<div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_50%)]" />} Icon={BarChart3} description="" onClick={() => {
         playSound('select');
         navigateTo(Screen.Reports);

@@ -10,18 +10,18 @@ import { useSavedNews } from '@/hooks/useSavedNews';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const categories = ['Todos', 'Meditação', 'Sono', 'Nutrição', 'Exercícios', 'Social', 'Trabalho', 'Ansiedade', 'Depressão'];
+const categories = ['Todos', 'Boas Notícias', 'Estudos', 'Meditação', 'Sono', 'Nutrição', 'Exercícios', 'Social', 'Esperança'];
 
 const categoryEmojis: Record<string, string> = {
   'Todos': '📰',
+  'Boas Notícias': '🌟',
+  'Estudos': '🔬',
   'Meditação': '🧘',
   'Sono': '😴',
   'Nutrição': '🥗',
   'Exercícios': '🏃',
   'Social': '🤝',
-  'Trabalho': '💼',
-  'Ansiedade': '😰',
-  'Depressão': '💙',
+  'Esperança': '🌈',
   'Saúde Mental': '🧠',
 };
 
@@ -262,8 +262,8 @@ const NewsScreen: React.FC = () => {
   if (isLoading && activeTab === 'explore') {
     return (
       <div className="p-4 pb-28 bg-background h-full overflow-y-auto">
-        <h1 className="text-3xl font-bold mb-6 text-foreground">Notícias & Estudos</h1>
-        <p className="text-muted-foreground mb-4">Buscando artigos sobre bem-estar...</p>
+        <h1 className="text-3xl font-bold mb-6 text-foreground">Boas Novas</h1>
+        <p className="text-muted-foreground mb-4">Buscando notícias que inspiram esperança...</p>
         <AnimatedLoadingSkeleton />
       </div>
     );
@@ -272,7 +272,7 @@ const NewsScreen: React.FC = () => {
   return (
     <div className="p-4 pb-28 bg-background h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-3xl font-bold text-foreground">Notícias & Estudos</h1>
+        <h1 className="text-3xl font-bold text-foreground">Boas Novas</h1>
         <Button
           variant="ghost"
           size="icon"
@@ -283,7 +283,7 @@ const NewsScreen: React.FC = () => {
           <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
         </Button>
       </div>
-      <p className="text-muted-foreground mb-4">Notícias reais sobre saúde mental e bem-estar</p>
+      <p className="text-muted-foreground mb-4">Estudos e notícias que trazem esperança e felicidade 🌟</p>
       
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">

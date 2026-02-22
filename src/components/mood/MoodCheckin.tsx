@@ -15,15 +15,21 @@ interface MoodCheckinProps {
 }
 
 const EMOTIONS: { id: CheckinEmotion; emoji: string; label: string }[] = [
+  { id: 'feliz', emoji: '😊', label: 'Feliz' },
   { id: 'calmo', emoji: '😌', label: 'Calmo' },
+  { id: 'animado', emoji: '🤩', label: 'Animado' },
+  { id: 'grato', emoji: '🙏', label: 'Grato' },
+  { id: 'amado', emoji: '🥰', label: 'Amado' },
+  { id: 'motivado', emoji: '💪', label: 'Motivado' },
+  { id: 'esperancoso', emoji: '🌟', label: 'Esperançoso' },
+  { id: 'inspirado', emoji: '✨', label: 'Inspirado' },
+  { id: 'aliviado', emoji: '😮‍💨', label: 'Aliviado' },
+  { id: 'orgulhoso', emoji: '😤', label: 'Orgulhoso' },
   { id: 'ansioso', emoji: '😰', label: 'Ansioso' },
   { id: 'triste', emoji: '😢', label: 'Triste' },
   { id: 'cansado', emoji: '😴', label: 'Cansado' },
   { id: 'sobrecarregado', emoji: '😵', label: 'Sobrecarregado' },
-  { id: 'grato', emoji: '🙏', label: 'Grato' },
-  { id: 'motivado', emoji: '💪', label: 'Motivado' },
   { id: 'confuso', emoji: '😕', label: 'Confuso' },
-  { id: 'esperancoso', emoji: '🌟', label: 'Esperançoso' },
   { id: 'vazio', emoji: '🫥', label: 'Vazio' },
 ];
 
@@ -161,6 +167,12 @@ const MoodCheckin: React.FC<MoodCheckinProps> = ({ onComplete, onClose }) => {
       confuso: "Está tudo bem não ter clareza agora. Às vezes precisamos de tempo para as coisas fazerem sentido. Seja gentil consigo. 💙",
       esperancoso: "A esperança é uma semente poderosa. Continue cultivando esse sentimento. Dias melhores estão a caminho. 💙",
       vazio: "Às vezes o vazio nos visita. Você não precisa preencher esse espaço agora. Apenas permita-se estar presente. 💙",
+      feliz: "Que alegria saber que você está feliz! Esse sentimento é precioso. Aproveite cada instante dele. 💙",
+      animado: "Adoro essa energia! A animação é contagiante. Que bom que você está vibrando assim hoje! 💙",
+      amado: "Sentir-se amado é um dos sentimentos mais bonitos. Você merece todo o amor que recebe. 💙",
+      aliviado: "Que bom sentir esse alívio. Às vezes precisamos soltar o peso para seguir mais leves. 💙",
+      orgulhoso: "Você tem razão de sentir orgulho! Reconhecer suas conquistas é um ato de autocuidado. 💙",
+      inspirado: "Que maravilha estar inspirado! Esse sentimento pode mover montanhas. Use-o para criar algo lindo. 💙",
     };
 
     return responses[emotion] || responses.calmo;
