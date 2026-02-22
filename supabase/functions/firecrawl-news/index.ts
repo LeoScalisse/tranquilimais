@@ -30,21 +30,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build search query based on category
     const categoryQueries: Record<string, string> = {
-      // Main: Estudos (all)
+      // Estudos
       'Estudos': 'estudos científicos recentes saúde bem-estar psicologia neurociência descoberta pesquisa resultados positivos',
-      // Sub-filters for Estudos
       'Estudos-Sono': 'estudos científicos sono qualidade descanso ritmo circadiano benefícios pesquisa',
       'Estudos-Nutrição': 'estudos científicos nutrição alimentação saudável dieta saúde benefícios pesquisa',
       'Estudos-Exercícios': 'estudos científicos exercícios atividade física saúde mental benefícios pesquisa',
       'Estudos-Meditação': 'estudos científicos meditação mindfulness atenção plena benefícios cérebro pesquisa',
       'Estudos-Saúde Mental': 'estudos científicos saúde mental psicologia terapia bem-estar emocional pesquisa',
-      // Main: Boas Notícias — genuinely good world news few people know about
-      'Boas Notícias': 'boas notícias reais mundo animais salvos extinção espécies recuperadas melhoria sociedade avanço país progresso ambiental energia renovável reflorestamento redução pobreza conquista humanitária descoberta científica positiva solidariedade -violência -crime -tragédia -morte -guerra',
+      // Boas Notícias - geral
+      'Boas Notícias': 'boas notícias reais mundo animais salvos extinção espécies recuperadas melhoria sociedade avanço progresso ambiental energia renovável reflorestamento redução pobreza conquista humanitária descoberta positiva -violência -crime -tragédia -morte -guerra',
+      // Boas Notícias - sub-filtros
+      'BoasNoticias-Meio Ambiente': 'boas notícias meio ambiente animais salvos extinção espécies recuperadas reflorestamento oceanos limpos energia renovável clima positivo preservação natureza -desmatamento -poluição',
+      'BoasNoticias-Tecnologia': 'boas notícias tecnologia inovação descoberta científica avanço tecnológico cura doença energia limpa inteligência artificial positiva progresso -hack -vazamento',
+      'BoasNoticias-Solidariedade': 'boas notícias solidariedade voluntariado doação comunidade ajuda humanitária pessoas ajudando gentileza bondade humana superação história inspiradora',
+      'BoasNoticias-Saúde': 'boas notícias saúde cura vacina tratamento descoberta médica avanço medicina expectativa vida qualidade vida melhoria -pandemia -surto',
+      'BoasNoticias-Cultura': 'boas notícias cultura educação arte inclusão diversidade patrimônio conquista social igualdade direitos avanço cultural',
     };
 
-    const searchQuery = categoryQueries[category] || categoryQueries['Estudos'];
+    const searchQuery = categoryQueries[category] || categoryQueries['Boas Notícias'];
 
     console.log(`Searching news for category: ${category}, query: ${searchQuery}`);
 
@@ -59,7 +63,7 @@ Deno.serve(async (req) => {
         limit: limit,
         lang: 'pt',
         country: 'BR',
-        tbs: 'qdr:m', // Last month for more results
+        tbs: 'qdr:m',
       }),
     });
 
@@ -74,8 +78,10 @@ Deno.serve(async (req) => {
     }
 
     // Determine display category
-    const isBoasNoticias = category === 'Boas Notícias';
-    const displayCategory = isBoasNoticias ? 'Boas Notícias' : (category.startsWith('Estudos-') ? category.replace('Estudos-', '') : 'Estudos');
+    const isBoasNoticias = category === 'Boas Notícias' || category.startsWith('BoasNoticias-');
+    const displayCategory = isBoasNoticias
+      ? (category.startsWith('BoasNoticias-') ? category.replace('BoasNoticias-', '') : 'Boas Notícias')
+      : (category.startsWith('Estudos-') ? category.replace('Estudos-', '') : 'Estudos');
 
     const articles: NewsSearchResult[] = (data.data || []).map((result: any, index: number) => {
       let source = 'Fonte desconhecida';
@@ -86,21 +92,23 @@ Deno.serve(async (req) => {
         console.log('Error parsing URL:', e);
       }
 
-      // For estudos sub-filters, try to detect more specific category
       let finalCategory = displayCategory;
       if (!isBoasNoticias && displayCategory === 'Estudos') {
         const content = (result.title + ' ' + result.description).toLowerCase();
-        if (content.includes('sono') || content.includes('dormir') || content.includes('descanso')) {
-          finalCategory = 'Sono';
-        } else if (content.includes('nutrição') || content.includes('alimentação') || content.includes('dieta')) {
-          finalCategory = 'Nutrição';
-        } else if (content.includes('exercício') || content.includes('atividade física') || content.includes('treino')) {
-          finalCategory = 'Exercícios';
-        } else if (content.includes('meditação') || content.includes('mindfulness')) {
-          finalCategory = 'Meditação';
-        } else if (content.includes('saúde mental') || content.includes('psicolog') || content.includes('terapi')) {
-          finalCategory = 'Saúde Mental';
-        }
+        if (content.includes('sono') || content.includes('dormir')) finalCategory = 'Sono';
+        else if (content.includes('nutrição') || content.includes('alimentação')) finalCategory = 'Nutrição';
+        else if (content.includes('exercício') || content.includes('atividade física')) finalCategory = 'Exercícios';
+        else if (content.includes('meditação') || content.includes('mindfulness')) finalCategory = 'Meditação';
+        else if (content.includes('saúde mental') || content.includes('psicolog')) finalCategory = 'Saúde Mental';
+      }
+
+      if (isBoasNoticias && displayCategory === 'Boas Notícias') {
+        const content = (result.title + ' ' + result.description).toLowerCase();
+        if (content.includes('animal') || content.includes('espécie') || content.includes('floresta') || content.includes('clima') || content.includes('oceano')) finalCategory = 'Meio Ambiente';
+        else if (content.includes('tecnologia') || content.includes('inovação') || content.includes('científic')) finalCategory = 'Tecnologia';
+        else if (content.includes('solidariedade') || content.includes('voluntário') || content.includes('doação') || content.includes('ajuda')) finalCategory = 'Solidariedade';
+        else if (content.includes('saúde') || content.includes('cura') || content.includes('vacina') || content.includes('tratamento')) finalCategory = 'Saúde';
+        else if (content.includes('cultura') || content.includes('educação') || content.includes('arte') || content.includes('inclusão')) finalCategory = 'Cultura';
       }
 
       return {

@@ -16,6 +16,9 @@ type MainTab = 'estudos' | 'boas-noticias' | 'saved';
 // Sub-filters for Estudos
 const estudosFilters = ['Todos', 'Sono', 'Nutrição', 'Exercícios', 'Meditação', 'Saúde Mental'];
 
+// Sub-filters for Boas Notícias
+const boasNoticiasFilters = ['Todos', 'Meio Ambiente', 'Tecnologia', 'Solidariedade', 'Saúde', 'Cultura'];
+
 const categoryEmojis: Record<string, string> = {
   'Todos': '📚',
   'Sono': '😴',
@@ -25,6 +28,11 @@ const categoryEmojis: Record<string, string> = {
   'Saúde Mental': '🧠',
   'Boas Notícias': '🌟',
   'Estudos': '🔬',
+  'Meio Ambiente': '🌿',
+  'Tecnologia': '🚀',
+  'Solidariedade': '🤝',
+  'Saúde': '💚',
+  'Cultura': '🎨',
 };
 
 const CACHE_KEY = 'tranquili_news_cache';
@@ -69,18 +77,21 @@ const NewsScreen: React.FC = () => {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [mainTab, setMainTab] = useState<MainTab>('estudos');
   const [estudosFilter, setEstudosFilter] = useState('Todos');
+  const [boasNoticiasFilter, setBoasNoticiasFilter] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const { savedNews, isNewsSaved, toggleSaveNews, fetchSavedNews } = useSavedNews();
 
   // Derive the actual category to fetch based on main tab + filter
   const getSearchCategory = useCallback(() => {
-    if (mainTab === 'boas-noticias') return 'Boas Notícias';
+    if (mainTab === 'boas-noticias') {
+      return boasNoticiasFilter === 'Todos' ? 'Boas Notícias' : `BoasNoticias-${boasNoticiasFilter}`;
+    }
     if (mainTab === 'estudos') {
       return estudosFilter === 'Todos' ? 'Estudos' : `Estudos-${estudosFilter}`;
     }
     return 'Todos';
-  }, [mainTab, estudosFilter]);
+  }, [mainTab, estudosFilter, boasNoticiasFilter]);
 
   const fetchNews = useCallback(async (category: string, forceRefresh = false) => {
     try {
@@ -134,7 +145,7 @@ const NewsScreen: React.FC = () => {
       }
     };
     loadNews();
-  }, [mainTab, estudosFilter, fetchNews, getSearchCategory]);
+  }, [mainTab, estudosFilter, boasNoticiasFilter, fetchNews, getSearchCategory]);
 
   useEffect(() => {
     if (user && mainTab === 'saved') {
@@ -331,8 +342,27 @@ const NewsScreen: React.FC = () => {
             />
           </div>
 
+          {/* Sub-filters for Boas Notícias */}
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
+            {boasNoticiasFilters.map((filter) => (
+              <motion.button
+                key={filter}
+                onClick={() => setBoasNoticiasFilter(filter)}
+                whileTap={{ scale: 0.95 }}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  boasNoticiasFilter === filter
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'bg-card text-muted-foreground border border-border hover:border-primary hover:text-primary'
+                }`}
+              >
+                <span className="mr-1">{categoryEmojis[filter] || '🌟'}</span>
+                {filter}
+              </motion.button>
+            ))}
+          </div>
+
           {/* Notícia do Dia - Featured highlight */}
-          {!searchQuery && filteredArticles.length > 0 && (
+          {!searchQuery && boasNoticiasFilter === 'Todos' && filteredArticles.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -383,9 +413,9 @@ const NewsScreen: React.FC = () => {
             </p>
           </div>
 
-          {/* Remaining articles (skip first since it's featured) */}
+          {/* Remaining articles (skip first if featured) */}
           {(() => {
-            const remaining = !searchQuery && filteredArticles.length > 1
+            const remaining = !searchQuery && boasNoticiasFilter === 'Todos' && filteredArticles.length > 1
               ? filteredArticles.slice(1)
               : filteredArticles;
             return renderArticleGrid(remaining);

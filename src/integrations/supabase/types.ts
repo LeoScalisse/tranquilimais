@@ -157,6 +157,33 @@ export type Database = {
         }
         Relationships: []
       }
+      habits: {
+        Row: {
+          color: string
+          created_at: string
+          date: string
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          date: string
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          date?: string
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       moods: {
         Row: {
           checkin_data: Json | null
