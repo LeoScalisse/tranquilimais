@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { category = 'saúde mental', limit = 10 } = await req.json();
+    const { category = 'Estudos', limit = 12 } = await req.json();
 
     const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!apiKey) {
@@ -32,18 +32,19 @@ Deno.serve(async (req) => {
 
     // Build search query based on category
     const categoryQueries: Record<string, string> = {
-      'Todos': 'boas notícias esperança humanidade bem-estar saúde mental estudos positivos',
-      'Boas Notícias': 'boas notícias positivas mundo esperança humanidade solidariedade conquistas',
-      'Estudos': 'estudos científicos saúde mental bem-estar psicologia pesquisa descoberta',
-      'Meditação': 'meditação mindfulness atenção plena benefícios estudos positivos',
-      'Sono': 'sono qualidade descanso saúde bem-estar dicas estudos',
-      'Nutrição': 'nutrição alimentação saudável humor bem-estar estudos',
-      'Exercícios': 'exercícios físicos benefícios saúde mental humor felicidade',
-      'Social': 'solidariedade comunidade voluntariado boas ações conexão humana',
-      'Esperança': 'esperança progresso mundo melhor conquistas humanidade avanços sociais',
+      // Main: Estudos (all)
+      'Estudos': 'estudos científicos recentes saúde bem-estar psicologia neurociência descoberta pesquisa resultados positivos',
+      // Sub-filters for Estudos
+      'Estudos-Sono': 'estudos científicos sono qualidade descanso ritmo circadiano benefícios pesquisa',
+      'Estudos-Nutrição': 'estudos científicos nutrição alimentação saudável dieta saúde benefícios pesquisa',
+      'Estudos-Exercícios': 'estudos científicos exercícios atividade física saúde mental benefícios pesquisa',
+      'Estudos-Meditação': 'estudos científicos meditação mindfulness atenção plena benefícios cérebro pesquisa',
+      'Estudos-Saúde Mental': 'estudos científicos saúde mental psicologia terapia bem-estar emocional pesquisa',
+      // Main: Boas Notícias — genuinely good world news few people know about
+      'Boas Notícias': 'boas notícias mundo avanços positivos progresso humanidade conquistas meio ambiente tecnologia social solidariedade descobertas -violência -crime -tragédia -morte',
     };
 
-    const searchQuery = categoryQueries[category] || `${category} saúde mental bem-estar`;
+    const searchQuery = categoryQueries[category] || categoryQueries['Estudos'];
 
     console.log(`Searching news for category: ${category}, query: ${searchQuery}`);
 
@@ -58,8 +59,7 @@ Deno.serve(async (req) => {
         limit: limit,
         lang: 'pt',
         country: 'BR',
-        tbs: 'qdr:w', // Last week
-        // Removed scrapeOptions to speed up search (was causing 60s+ delays)
+        tbs: 'qdr:m', // Last month for more results
       }),
     });
 
@@ -73,9 +73,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Transform results into news articles
+    // Determine display category
+    const isBoasNoticias = category === 'Boas Notícias';
+    const displayCategory = isBoasNoticias ? 'Boas Notícias' : (category.startsWith('Estudos-') ? category.replace('Estudos-', '') : 'Estudos');
+
     const articles: NewsSearchResult[] = (data.data || []).map((result: any, index: number) => {
-      // Extract domain as source
       let source = 'Fonte desconhecida';
       try {
         const url = new URL(result.url);
@@ -84,24 +86,21 @@ Deno.serve(async (req) => {
         console.log('Error parsing URL:', e);
       }
 
-      // Categorize based on content
-      const content = (result.title + ' ' + result.description).toLowerCase();
-      let detectedCategory = category !== 'Todos' ? category : 'Boas Notícias';
-      
-      if (content.includes('estudo') || content.includes('pesquisa') || content.includes('científic')) {
-        detectedCategory = 'Estudos';
-      } else if (content.includes('meditação') || content.includes('mindfulness')) {
-        detectedCategory = 'Meditação';
-      } else if (content.includes('sono') || content.includes('dormir')) {
-        detectedCategory = 'Sono';
-      } else if (content.includes('nutrição') || content.includes('alimentação') || content.includes('dieta')) {
-        detectedCategory = 'Nutrição';
-      } else if (content.includes('exercício') || content.includes('atividade física')) {
-        detectedCategory = 'Exercícios';
-      } else if (content.includes('solidariedade') || content.includes('voluntário') || content.includes('comunidade')) {
-        detectedCategory = 'Social';
-      } else if (content.includes('esperança') || content.includes('progresso') || content.includes('avanço')) {
-        detectedCategory = 'Esperança';
+      // For estudos sub-filters, try to detect more specific category
+      let finalCategory = displayCategory;
+      if (!isBoasNoticias && displayCategory === 'Estudos') {
+        const content = (result.title + ' ' + result.description).toLowerCase();
+        if (content.includes('sono') || content.includes('dormir') || content.includes('descanso')) {
+          finalCategory = 'Sono';
+        } else if (content.includes('nutrição') || content.includes('alimentação') || content.includes('dieta')) {
+          finalCategory = 'Nutrição';
+        } else if (content.includes('exercício') || content.includes('atividade física') || content.includes('treino')) {
+          finalCategory = 'Exercícios';
+        } else if (content.includes('meditação') || content.includes('mindfulness')) {
+          finalCategory = 'Meditação';
+        } else if (content.includes('saúde mental') || content.includes('psicolog') || content.includes('terapi')) {
+          finalCategory = 'Saúde Mental';
+        }
       }
 
       return {
@@ -109,7 +108,7 @@ Deno.serve(async (req) => {
         title: result.title || 'Artigo sem título',
         description: result.description || result.markdown?.substring(0, 200) || 'Sem descrição disponível',
         url: result.url || '',
-        category: detectedCategory,
+        category: finalCategory,
         source: source,
         publishedAt: new Date().toISOString(),
       };
