@@ -32,15 +32,15 @@ Deno.serve(async (req) => {
 
     // Build search query based on category
     const categoryQueries: Record<string, string> = {
-      'Todos': 'saúde mental bem-estar psicologia estudos recentes',
-      'Meditação': 'meditação mindfulness atenção plena benefícios estudos',
-      'Sono': 'sono qualidade sono insônia saúde mental estudos',
-      'Nutrição': 'nutrição alimentação saúde mental humor estudos',
-      'Exercícios': 'exercícios físicos ansiedade depressão saúde mental',
-      'Social': 'relacionamentos sociais bem-estar saúde mental conexões',
-      'Trabalho': 'saúde mental trabalho burnout estresse profissional',
-      'Ansiedade': 'ansiedade tratamento sintomas técnicas estudos',
-      'Depressão': 'depressão saúde mental tratamento estudos recentes',
+      'Todos': 'boas notícias esperança humanidade bem-estar saúde mental estudos positivos',
+      'Boas Notícias': 'boas notícias positivas mundo esperança humanidade solidariedade conquistas',
+      'Estudos': 'estudos científicos saúde mental bem-estar psicologia pesquisa descoberta',
+      'Meditação': 'meditação mindfulness atenção plena benefícios estudos positivos',
+      'Sono': 'sono qualidade descanso saúde bem-estar dicas estudos',
+      'Nutrição': 'nutrição alimentação saudável humor bem-estar estudos',
+      'Exercícios': 'exercícios físicos benefícios saúde mental humor felicidade',
+      'Social': 'solidariedade comunidade voluntariado boas ações conexão humana',
+      'Esperança': 'esperança progresso mundo melhor conquistas humanidade avanços sociais',
     };
 
     const searchQuery = categoryQueries[category] || `${category} saúde mental bem-estar`;
@@ -86,9 +86,11 @@ Deno.serve(async (req) => {
 
       // Categorize based on content
       const content = (result.title + ' ' + result.description).toLowerCase();
-      let detectedCategory = category !== 'Todos' ? category : 'Saúde Mental';
+      let detectedCategory = category !== 'Todos' ? category : 'Boas Notícias';
       
-      if (content.includes('meditação') || content.includes('mindfulness')) {
+      if (content.includes('estudo') || content.includes('pesquisa') || content.includes('científic')) {
+        detectedCategory = 'Estudos';
+      } else if (content.includes('meditação') || content.includes('mindfulness')) {
         detectedCategory = 'Meditação';
       } else if (content.includes('sono') || content.includes('dormir')) {
         detectedCategory = 'Sono';
@@ -96,14 +98,10 @@ Deno.serve(async (req) => {
         detectedCategory = 'Nutrição';
       } else if (content.includes('exercício') || content.includes('atividade física')) {
         detectedCategory = 'Exercícios';
-      } else if (content.includes('relacionamento') || content.includes('social')) {
+      } else if (content.includes('solidariedade') || content.includes('voluntário') || content.includes('comunidade')) {
         detectedCategory = 'Social';
-      } else if (content.includes('trabalho') || content.includes('burnout') || content.includes('profissional')) {
-        detectedCategory = 'Trabalho';
-      } else if (content.includes('ansiedade')) {
-        detectedCategory = 'Ansiedade';
-      } else if (content.includes('depressão')) {
-        detectedCategory = 'Depressão';
+      } else if (content.includes('esperança') || content.includes('progresso') || content.includes('avanço')) {
+        detectedCategory = 'Esperança';
       }
 
       return {

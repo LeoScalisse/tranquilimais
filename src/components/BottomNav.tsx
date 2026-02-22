@@ -15,7 +15,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, navigateTo }) => {
     { screen: Screen.Home, icon: Home, label: 'Início' },
     { screen: Screen.Chat, icon: MessageCircle, label: 'Tranquilinha' },
     { screen: Screen.Gratitude, icon: Heart, label: 'Gratidão' },
-    { screen: Screen.Games, icon: Gamepad2, label: 'Games' },
+    { screen: Screen.Games, icon: Gamepad2, label: 'Academia Mental' },
     { screen: Screen.Reports, icon: BarChart3, label: 'Evolução' },
     { screen: Screen.News, icon: Newspaper, label: 'Notícias' },
   ];

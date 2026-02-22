@@ -199,7 +199,7 @@ const App: React.FC = () => {
       return;
     }
     if (screen === Screen.Games && !user) {
-      showSignUp('Crie sua conta para jogar', 'Acesse jogos relaxantes para sua pausa mental');
+      showSignUp('Crie sua conta para acessar', 'Exercite sua mente na Academia Mental');
       return;
     }
     setActiveScreen(screen);

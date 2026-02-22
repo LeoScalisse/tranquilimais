@@ -21,6 +21,12 @@ const EMOTION_CONFIG: Record<CheckinEmotion, { label: string; emoji: string; col
   confuso: { label: 'Confuso', emoji: '🤔', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
   esperancoso: { label: 'Esperançoso', emoji: '🌟', color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400' },
   vazio: { label: 'Vazio', emoji: '😶', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' },
+  feliz: { label: 'Feliz', emoji: '😊', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  animado: { label: 'Animado', emoji: '🤩', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' },
+  amado: { label: 'Amado', emoji: '🥰', color: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400' },
+  aliviado: { label: 'Aliviado', emoji: '😮‍💨', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400' },
+  orgulhoso: { label: 'Orgulhoso', emoji: '😤', color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400' },
+  inspirado: { label: 'Inspirado', emoji: '✨', color: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400' },
 };
 
 const INTENSITY_CONFIG: Record<CheckinIntensity, { label: string; emoji: string; color: string }> = {

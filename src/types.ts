@@ -1,4 +1,4 @@
-export type Mood = 'happy' | 'calm' | 'neutral' | 'sad' | 'anxious';
+export type Mood = 'happy' | 'calm' | 'neutral' | 'sad' | 'anxious' | 'excited' | 'grateful' | 'tired' | 'loved';
 
 // New mood check-in types
 export type CheckinEmotion = 
@@ -11,7 +11,13 @@ export type CheckinEmotion =
   | 'motivado' 
   | 'confuso' 
   | 'esperancoso' 
-  | 'vazio';
+  | 'vazio'
+  | 'feliz'
+  | 'animado'
+  | 'amado'
+  | 'aliviado'
+  | 'orgulhoso'
+  | 'inspirado';
 
 export type CheckinIntensity = 'leve' | 'moderado' | 'intenso';
 

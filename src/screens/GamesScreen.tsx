@@ -500,8 +500,8 @@ const GamesScreen: React.FC = () => {
 
   return (
     <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
-      <h1 className="text-3xl font-bold mb-2 text-gray-900">Pausa Mental</h1>
-      <p className="text-gray-600 mb-6">Escolha um jogo para relaxar sua mente</p>
+      <h1 className="text-3xl font-bold mb-2 text-gray-900">Academia Mental</h1>
+      <p className="text-gray-600 mb-6">Exercite sua mente de forma leve e divertida</p>
 
       <div className="space-y-4">
         {games.map((game) => (
