@@ -6,13 +6,9 @@ import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { playSound } from '../services/soundService';
 import BrandText from '../components/BrandText';
-
-interface HabitEntry {
-  id: string;
-  title: string;
-  date: string; // YYYY-MM-DD
-  color: string;
-}
+import { useHabits } from '@/hooks/useHabits';
+import { useAuth } from '@/hooks/useAuth';
+import AnimatedLoadingSkeleton from '@/components/ui/animated-loading-skeleton';
 
 const HABIT_COLORS = [
   { name: 'Azul', value: 'blue', bg: 'bg-blue-500', dot: 'bg-blue-400' },
@@ -25,37 +21,15 @@ const HABIT_COLORS = [
   { name: 'Ciano', value: 'teal', bg: 'bg-teal-500', dot: 'bg-teal-400' },
 ];
 
-const STORAGE_KEY = 'tranquili_habits';
-
-const loadHabits = (): HabitEntry[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveHabits = (habits: HabitEntry[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
-};
-
 const HabitsScreen: React.FC = () => {
-  const [habits, setHabits] = useState<HabitEntry[]>(loadHabits);
+  const { user } = useAuth();
+  const { habits, isLoading, addHabit, deleteHabit, getHabitsForDate } = useHabits();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newHabitTitle, setNewHabitTitle] = useState('');
   const [newHabitColor, setNewHabitColor] = useState(HABIT_COLORS[0].value);
   const [viewingDate, setViewingDate] = useState<string | null>(null);
-
-  const updateHabits = useCallback((updater: (prev: HabitEntry[]) => HabitEntry[]) => {
-    setHabits(prev => {
-      const next = updater(prev);
-      saveHabits(next);
-      return next;
-    });
-  }, []);
 
   const navigateMonth = useCallback((direction: 'prev' | 'next') => {
     playSound('select');
@@ -71,7 +45,6 @@ const HabitsScreen: React.FC = () => {
     setCurrentDate(new Date());
   }, []);
 
-  // Calendar grid
   const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -89,19 +62,13 @@ const HabitsScreen: React.FC = () => {
     return { days, lastDay };
   }, [currentDate]);
 
-  const getHabitsForDate = useCallback((dateStr: string) => {
-    return habits.filter(h => h.date === dateStr);
-  }, [habits]);
-
-  const formatDateKey = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
+  const formatDateKey = (date: Date) => date.toISOString().split('T')[0];
 
   const handleDayClick = (date: Date) => {
+    if (!user) return;
     playSound('click');
     const dateStr = formatDateKey(date);
     const dayHabits = getHabitsForDate(dateStr);
-    
     if (dayHabits.length > 0) {
       setViewingDate(dateStr);
     } else {
@@ -122,26 +89,18 @@ const HabitsScreen: React.FC = () => {
     }
   };
 
-  const handleCreateHabit = useCallback(() => {
+  const handleCreateHabit = useCallback(async () => {
     if (!newHabitTitle.trim() || !selectedDate) return;
     playSound('confirm');
-    
-    const habit: HabitEntry = {
-      id: crypto.randomUUID(),
-      title: newHabitTitle.trim(),
-      date: selectedDate,
-      color: newHabitColor,
-    };
-
-    updateHabits(prev => [...prev, habit]);
+    await addHabit(newHabitTitle.trim(), selectedDate, newHabitColor);
     setIsDialogOpen(false);
     setNewHabitTitle('');
-  }, [newHabitTitle, selectedDate, newHabitColor, updateHabits]);
+  }, [newHabitTitle, selectedDate, newHabitColor, addHabit]);
 
-  const handleDeleteHabit = useCallback((id: string) => {
+  const handleDeleteHabit = useCallback(async (id: string) => {
     playSound('select');
-    updateHabits(prev => prev.filter(h => h.id !== id));
-  }, [updateHabits]);
+    await deleteHabit(id);
+  }, [deleteHabit]);
 
   const getColorClasses = (colorValue: string) => {
     return HABIT_COLORS.find(c => c.value === colorValue) || HABIT_COLORS[0];
@@ -150,18 +109,36 @@ const HabitsScreen: React.FC = () => {
   const todayStr = formatDateKey(new Date());
   const monthLabel = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-  // Stats
   const currentMonthHabits = habits.filter(h => {
     const d = new Date(h.date);
     return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
   });
   const uniqueDays = new Set(currentMonthHabits.map(h => h.date)).size;
 
+  if (!user) {
+    return (
+      <div className="p-4 pb-28 bg-background h-full overflow-y-auto flex items-center justify-center">
+        <div className="text-center">
+          <span className="text-6xl block mb-4">🔒</span>
+          <p className="text-muted-foreground">Faça login para registrar seus hábitos</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-4 pb-28 bg-background h-full overflow-y-auto">
+        <h1 className="text-3xl font-bold mb-6 text-foreground"><BrandText text="Meus Hábitos" /></h1>
+        <AnimatedLoadingSkeleton />
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 pb-28 bg-gray-50 h-full overflow-y-auto">
-      {/* Header */}
+    <div className="p-4 pb-28 bg-background h-full overflow-y-auto">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+        <h1 className="text-3xl font-bold text-foreground tracking-tight">
           <BrandText text="Meus Hábitos" />
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
@@ -171,45 +148,39 @@ const HabitsScreen: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-border">
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
           <p className="text-xs text-muted-foreground font-medium uppercase">Este mês</p>
           <p className="text-2xl font-bold text-foreground">{currentMonthHabits.length}</p>
           <p className="text-xs text-muted-foreground">hábitos registrados</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-border">
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
           <p className="text-xs text-muted-foreground font-medium uppercase">Dias ativos</p>
           <p className="text-2xl font-bold text-foreground">{uniqueDays}</p>
           <p className="text-xs text-muted-foreground">dias com hábitos</p>
         </div>
       </div>
 
-      {/* Calendar Navigation */}
-      <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden mb-6">
+      {/* Calendar */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden mb-6">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <Button variant="ghost" size="icon" onClick={() => navigateMonth('prev')}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="text-center">
             <h2 className="text-lg font-semibold text-foreground capitalize">{monthLabel}</h2>
-            <button onClick={goToToday} className="text-xs text-primary hover:underline">
-              Hoje
-            </button>
+            <button onClick={goToToday} className="text-xs text-primary hover:underline">Hoje</button>
           </div>
           <Button variant="ghost" size="icon" onClick={() => navigateMonth('next')}>
             <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
 
-        {/* Day Headers */}
         <div className="grid grid-cols-7 border-b border-border">
           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-            <div key={day} className="py-2 text-center text-xs font-semibold text-muted-foreground">
-              {day}
-            </div>
+            <div key={day} className="py-2 text-center text-xs font-semibold text-muted-foreground">{day}</div>
           ))}
         </div>
 
-        {/* Calendar Grid */}
         <div className="grid grid-cols-7">
           {calendarDays.days.map((day, index) => {
             const dateStr = formatDateKey(day);
@@ -223,7 +194,7 @@ const HabitsScreen: React.FC = () => {
                 onClick={() => handleDayClick(day)}
                 className={cn(
                   'relative aspect-square flex flex-col items-center justify-start p-1 border-r border-b border-border/50 transition-colors',
-                  isCurrentMonth ? 'bg-white hover:bg-gray-50' : 'bg-gray-50/50 text-muted-foreground/50',
+                  isCurrentMonth ? 'bg-card hover:bg-muted/50' : 'bg-muted/20 text-muted-foreground/50',
                   isToday && 'ring-2 ring-inset ring-primary/30'
                 )}
               >
@@ -233,14 +204,11 @@ const HabitsScreen: React.FC = () => {
                 )}>
                   {day.getDate()}
                 </span>
-                {/* Habit dots */}
                 {dayHabits.length > 0 && (
                   <div className="flex flex-wrap gap-0.5 justify-center mt-0.5">
                     {dayHabits.slice(0, 4).map(h => {
                       const color = getColorClasses(h.color);
-                      return (
-                        <div key={h.id} className={cn('w-2 h-2 rounded-full', color.dot)} />
-                      );
+                      return <div key={h.id} className={cn('w-2 h-2 rounded-full', color.dot)} />;
                     })}
                     {dayHabits.length > 4 && (
                       <span className="text-[8px] text-muted-foreground">+{dayHabits.length - 4}</span>
@@ -255,7 +223,7 @@ const HabitsScreen: React.FC = () => {
 
       {/* Viewing Day Habits */}
       {viewingDate && (
-        <div className="bg-white rounded-2xl shadow-sm border border-border p-4 mb-6 animate-fade-in">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-4 mb-6 animate-fade-in">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-foreground">
               {new Date(viewingDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
@@ -273,7 +241,7 @@ const HabitsScreen: React.FC = () => {
             {getHabitsForDate(viewingDate).map(habit => {
               const color = getColorClasses(habit.color);
               return (
-                <div key={habit.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                <div key={habit.id} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
                   <div className="flex items-center gap-3">
                     <div className={cn('w-3 h-3 rounded-full', color.bg)} />
                     <span className="text-sm font-medium text-foreground">{habit.title}</span>
@@ -297,7 +265,6 @@ const HabitsScreen: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Registrar Hábito</DialogTitle>
           </DialogHeader>
-          
           <div className="space-y-4 py-2">
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">
@@ -310,11 +277,8 @@ const HabitsScreen: React.FC = () => {
                 onKeyDown={e => e.key === 'Enter' && handleCreateHabit()}
               />
             </div>
-
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">
-                Cor
-              </label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Cor</label>
               <div className="flex flex-wrap gap-2">
                 {HABIT_COLORS.map(color => (
                   <button
@@ -333,16 +297,9 @@ const HabitsScreen: React.FC = () => {
               </div>
             </div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleCreateHabit}
-              disabled={!newHabitTitle.trim()}
-              className="bg-primary text-primary-foreground"
-            >
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateHabit} disabled={!newHabitTitle.trim()} className="bg-primary text-primary-foreground">
               <CheckCircle2 className="w-4 h-4 mr-1" /> Salvar
             </Button>
           </DialogFooter>
