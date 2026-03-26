@@ -149,6 +149,20 @@ const HabitsScreen: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Flame className="w-4 h-4 text-orange-500" />
+            <p className="text-xs text-muted-foreground font-medium uppercase">Sequência atual</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{streaks.current} <span className="text-sm font-normal text-muted-foreground">{streaks.current === 1 ? 'dia' : 'dias'}</span></p>
+        </div>
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            <p className="text-xs text-muted-foreground font-medium uppercase">Melhor sequência</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{streaks.best} <span className="text-sm font-normal text-muted-foreground">{streaks.best === 1 ? 'dia' : 'dias'}</span></p>
+        </div>
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
           <p className="text-xs text-muted-foreground font-medium uppercase">Este mês</p>
           <p className="text-2xl font-bold text-foreground">{currentMonthHabits.length}</p>
           <p className="text-xs text-muted-foreground">hábitos registrados</p>
