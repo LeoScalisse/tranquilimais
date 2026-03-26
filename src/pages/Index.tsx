@@ -17,31 +17,25 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useMoods } from '@/hooks/useMoods';
 import { useAchievements } from '@/hooks/useAchievements';
+import { useSettings } from '@/hooks/useSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const STORAGE_KEYS = {
   chatHistory: 'tranquili_chat_history',
-  settings: 'tranquili_settings',
   onboarding: 'tranquili_onboarding',
   onboardingCompleted: 'tranquili_onboarding_completed',
 };
-
-const getDefaultSettings = (): AppSettings => ({
-  notificationsEnabled: true,
-  soundVolume: 0.5,
-  iconSet: 'default',
-});
 
 const App: React.FC = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { moodHistory, addMood, loading: moodsLoading } = useMoods();
   const { achievements, checkAndUnlockAchievements, unlockedCount, totalCount } = useAchievements();
+  const { settings, updateSettings } = useSettings();
   
   const [activeScreen, setActiveScreen] = useState<Screen>(Screen.Home);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [settings, setSettings] = useState<AppSettings>(getDefaultSettings());
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
@@ -49,19 +43,13 @@ const App: React.FC = () => {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [localOnboarding, setLocalOnboarding] = useState<{ name: string; path: string; reason: string } | null>(null);
 
-  // Load from localStorage
+  // Load onboarding state from localStorage (guest-only)
   useEffect(() => {
-    const storedChat = localStorage.getItem(STORAGE_KEYS.chatHistory);
-    const storedSettings = localStorage.getItem(STORAGE_KEYS.settings);
     const storedOnboardingCompleted = localStorage.getItem(STORAGE_KEYS.onboardingCompleted);
     const storedOnboarding = localStorage.getItem(STORAGE_KEYS.onboarding);
+    const storedChat = localStorage.getItem(STORAGE_KEYS.chatHistory);
 
     if (storedChat) setChatHistory(JSON.parse(storedChat));
-    if (storedSettings) {
-      const parsed = JSON.parse(storedSettings);
-      setSettings(parsed);
-      setMasterVolume(parsed.soundVolume);
-    }
     if (storedOnboardingCompleted === 'true') {
       setOnboardingCompleted(true);
     }
@@ -70,11 +58,10 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Save to localStorage
+  // Save chat to localStorage (fallback for guests; logged-in users use DB via ChatScreen)
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(chatHistory));
-    localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
-  }, [chatHistory, settings]);
+  }, [chatHistory]);
 
   // Check achievements when mood history changes
   useEffect(() => {
