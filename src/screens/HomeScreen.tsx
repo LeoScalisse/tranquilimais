@@ -9,6 +9,8 @@ import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper, CalendarCheck } f
 import PWAInstallPrompt from '../components/PWAInstallPrompt';
 import MoodCheckin from '../components/mood/MoodCheckin';
 import { AnimatePresence } from 'framer-motion';
+import { useGratitude } from '../hooks/useGratitude';
+import { useAuth } from '../hooks/useAuth';
 interface HomeScreenProps {
   userProfile: UserProfile;
   moodHistory: MoodEntry[];
