@@ -269,7 +269,7 @@ const App: React.FC = () => {
           />
         );
       case Screen.Settings:
-        return <SettingsScreen settings={settings} onSettingsChange={setSettings} />;
+        return <SettingsScreen settings={settings} onSettingsChange={updateSettings} />;
       case Screen.News:
         return <NewsScreen />;
       case Screen.Gratitude:
