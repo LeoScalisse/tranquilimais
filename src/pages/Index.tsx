@@ -195,7 +195,7 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     await signOut();
     setChatHistory([]);
-    setSettings(getDefaultSettings());
+    updateSettings({ notificationsEnabled: true, soundVolume: 0.5, iconSet: 'default' });
     localStorage.removeItem(STORAGE_KEYS.chatHistory);
     localStorage.removeItem(STORAGE_KEYS.onboarding);
     localStorage.removeItem(STORAGE_KEYS.onboardingCompleted);
