@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2, Flame, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { playSound } from '../services/soundService';
 import BrandText from '../components/BrandText';
@@ -23,7 +23,7 @@ const HABIT_COLORS = [
 
 const HabitsScreen: React.FC = () => {
   const { user } = useAuth();
-  const { habits, isLoading, addHabit, deleteHabit, getHabitsForDate } = useHabits();
+  const { habits, isLoading, addHabit, deleteHabit, getHabitsForDate, streaks } = useHabits();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -148,6 +148,20 @@ const HabitsScreen: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Flame className="w-4 h-4 text-orange-500" />
+            <p className="text-xs text-muted-foreground font-medium uppercase">Sequência atual</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{streaks.current} <span className="text-sm font-normal text-muted-foreground">{streaks.current === 1 ? 'dia' : 'dias'}</span></p>
+        </div>
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            <p className="text-xs text-muted-foreground font-medium uppercase">Melhor sequência</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{streaks.best} <span className="text-sm font-normal text-muted-foreground">{streaks.best === 1 ? 'dia' : 'dias'}</span></p>
+        </div>
         <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
           <p className="text-xs text-muted-foreground font-medium uppercase">Este mês</p>
           <p className="text-2xl font-bold text-foreground">{currentMonthHabits.length}</p>
