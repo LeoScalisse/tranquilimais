@@ -23,7 +23,7 @@ const HABIT_COLORS = [
 
 const HabitsScreen: React.FC = () => {
   const { user } = useAuth();
-  const { habits, isLoading, addHabit, deleteHabit, getHabitsForDate } = useHabits();
+  const { habits, isLoading, addHabit, deleteHabit, getHabitsForDate, streaks } = useHabits();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
