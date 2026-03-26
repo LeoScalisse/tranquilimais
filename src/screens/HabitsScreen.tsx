@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2, Flame, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { playSound } from '../services/soundService';
 import BrandText from '../components/BrandText';
