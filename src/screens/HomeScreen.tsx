@@ -9,6 +9,8 @@ import { MessageCircle, Gamepad2, BarChart3, Heart, Newspaper, CalendarCheck } f
 import PWAInstallPrompt from '../components/PWAInstallPrompt';
 import MoodCheckin from '../components/mood/MoodCheckin';
 import { AnimatePresence } from 'framer-motion';
+import { useGratitude } from '../hooks/useGratitude';
+import { useAuth } from '../hooks/useAuth';
 interface HomeScreenProps {
   userProfile: UserProfile;
   moodHistory: MoodEntry[];
@@ -74,43 +76,53 @@ const GratitudeJournal: React.FC<{
 }> = ({
   onSaved
 }) => {
+  const { user } = useAuth();
+  const { entries, fetchEntries, addEntry, getTodayEntry } = useGratitude();
   const [entry, setEntry] = useState('');
   const [savedToday, setSavedToday] = useState<string | null>(null);
+
   useEffect(() => {
-    const todayStr = new Date().toDateString();
-    const stored = localStorage.getItem(GRATITUDE_STORAGE_KEY);
-    if (stored) {
-      try {
-        const allEvents = JSON.parse(stored);
-        const todayEntry = allEvents.find((e: any) => e.category === "Gratidão" && new Date(e.startTime).toDateString() === todayStr);
-        if (todayEntry) {
-          setSavedToday(todayEntry.title);
-        }
-      } catch {}
+    if (user) {
+      fetchEntries();
     }
-  }, []);
-  const handleSave = () => {
+  }, [user, fetchEntries]);
+
+  useEffect(() => {
+    const todayEntry = getTodayEntry();
+    if (todayEntry) {
+      setSavedToday(todayEntry.content);
+    }
+  }, [entries, getTodayEntry]);
+
+  const handleSave = async () => {
     if (!entry.trim()) return;
     playSound('confirm');
-    const stored = localStorage.getItem(GRATITUDE_STORAGE_KEY);
-    const allEvents = stored ? JSON.parse(stored) : [];
-    const newEvent = {
-      id: crypto.randomUUID(),
-      title: entry,
-      category: "Gratidão",
-      startTime: new Date().toISOString(),
-      color: "yellow"
-    };
-    allEvents.push(newEvent);
-    localStorage.setItem(GRATITUDE_STORAGE_KEY, JSON.stringify(allEvents));
-    setSavedToday(entry);
-    setEntry('');
-
-    // Navigate to Gratitude screen after saving
-    if (onSaved) {
-      setTimeout(() => onSaved(), 300);
+    
+    if (user) {
+      const result = await addEntry(entry);
+      if (result) {
+        setSavedToday(entry);
+        setEntry('');
+        if (onSaved) setTimeout(() => onSaved(), 300);
+      }
+    } else {
+      // Guest fallback: localStorage
+      const stored = localStorage.getItem(GRATITUDE_STORAGE_KEY);
+      const allEvents = stored ? JSON.parse(stored) : [];
+      allEvents.push({
+        id: crypto.randomUUID(),
+        title: entry,
+        category: "Gratidão",
+        startTime: new Date().toISOString(),
+        color: "yellow"
+      });
+      localStorage.setItem(GRATITUDE_STORAGE_KEY, JSON.stringify(allEvents));
+      setSavedToday(entry);
+      setEntry('');
+      if (onSaved) setTimeout(() => onSaved(), 300);
     }
   };
+
   if (savedToday) {
     return <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl shadow-sm border border-yellow-100 mb-6">
         <h3 className="font-bold text-yellow-800 text-sm mb-2">✨ Gratidão de Hoje</h3>
