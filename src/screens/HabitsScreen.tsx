@@ -1,9 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2, Flame, Trophy, Trash2, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2, Flame, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { playSound } from '../services/soundService';
 import BrandText from '../components/BrandText';
@@ -12,82 +11,109 @@ import { useAuth } from '@/hooks/useAuth';
 import AnimatedLoadingSkeleton from '@/components/ui/animated-loading-skeleton';
 
 const HABIT_COLORS = [
-  { name: 'Azul', value: 'blue', bg: 'bg-blue-500', dot: 'bg-blue-400', text: 'text-blue-500' },
-  { name: 'Verde', value: 'green', bg: 'bg-green-500', dot: 'bg-green-400', text: 'text-green-500' },
-  { name: 'Roxo', value: 'purple', bg: 'bg-purple-500', dot: 'bg-purple-400', text: 'text-purple-500' },
-  { name: 'Laranja', value: 'orange', bg: 'bg-orange-500', dot: 'bg-orange-400', text: 'text-orange-500' },
-  { name: 'Rosa', value: 'pink', bg: 'bg-pink-500', dot: 'bg-pink-400', text: 'text-pink-500' },
-  { name: 'Vermelho', value: 'red', bg: 'bg-red-500', dot: 'bg-red-400', text: 'text-red-500' },
-  { name: 'Amarelo', value: 'yellow', bg: 'bg-yellow-500', dot: 'bg-yellow-400', text: 'text-yellow-500' },
-  { name: 'Ciano', value: 'teal', bg: 'bg-teal-500', dot: 'bg-teal-400', text: 'text-teal-500' },
+  { name: 'Azul', value: 'blue', bg: 'bg-blue-500', dot: 'bg-blue-400' },
+  { name: 'Verde', value: 'green', bg: 'bg-green-500', dot: 'bg-green-400' },
+  { name: 'Roxo', value: 'purple', bg: 'bg-purple-500', dot: 'bg-purple-400' },
+  { name: 'Laranja', value: 'orange', bg: 'bg-orange-500', dot: 'bg-orange-400' },
+  { name: 'Rosa', value: 'pink', bg: 'bg-pink-500', dot: 'bg-pink-400' },
+  { name: 'Vermelho', value: 'red', bg: 'bg-red-500', dot: 'bg-red-400' },
+  { name: 'Amarelo', value: 'yellow', bg: 'bg-yellow-500', dot: 'bg-yellow-400' },
+  { name: 'Ciano', value: 'teal', bg: 'bg-teal-500', dot: 'bg-teal-400' },
 ];
-
-const getColorClasses = (colorValue: string) => HABIT_COLORS.find(c => c.value === colorValue) || HABIT_COLORS[0];
 
 const HabitsScreen: React.FC = () => {
   const { user } = useAuth();
-  const {
-    definitions, habits, isLoading,
-    createDefinition, archiveDefinition,
-    logHabit, unlogHabit, isHabitLogged,
-    getHabitsForDate, getStreakForHabit, streaks,
-  } = useHabits();
-
+  const { habits, isLoading, addHabit, deleteHabit, getHabitsForDate, streaks } = useHabits();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newColor, setNewColor] = useState(HABIT_COLORS[0].value);
-  const [checkinDate, setCheckinDate] = useState<string | null>(null);
-  const [detailHabitId, setDetailHabitId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newHabitTitle, setNewHabitTitle] = useState('');
+  const [newHabitColor, setNewHabitColor] = useState(HABIT_COLORS[0].value);
+  const [viewingDate, setViewingDate] = useState<string | null>(null);
 
-  const navigateMonth = useCallback((dir: 'prev' | 'next') => {
+  const navigateMonth = useCallback((direction: 'prev' | 'next') => {
     playSound('select');
     setCurrentDate(prev => {
       const d = new Date(prev);
-      d.setMonth(d.getMonth() + (dir === 'next' ? 1 : -1));
+      d.setMonth(d.getMonth() + (direction === 'next' ? 1 : -1));
       return d;
     });
+  }, []);
+
+  const goToToday = useCallback(() => {
+    playSound('select');
+    setCurrentDate(new Date());
   }, []);
 
   const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - startDate.getDay());
+
     const days: Date[] = [];
     const current = new Date(startDate);
     for (let i = 0; i < 42; i++) {
       days.push(new Date(current));
       current.setDate(current.getDate() + 1);
     }
-    return days;
+    return { days, lastDay };
   }, [currentDate]);
 
   const formatDateKey = (date: Date) => date.toISOString().split('T')[0];
+
+  const handleDayClick = (date: Date) => {
+    if (!user) return;
+    playSound('click');
+    const dateStr = formatDateKey(date);
+    const dayHabits = getHabitsForDate(dateStr);
+    if (dayHabits.length > 0) {
+      setViewingDate(dateStr);
+    } else {
+      setSelectedDate(dateStr);
+      setNewHabitTitle('');
+      setNewHabitColor(HABIT_COLORS[0].value);
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleAddFromViewing = () => {
+    if (viewingDate) {
+      setSelectedDate(viewingDate);
+      setNewHabitTitle('');
+      setNewHabitColor(HABIT_COLORS[0].value);
+      setViewingDate(null);
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleCreateHabit = useCallback(async () => {
+    if (!newHabitTitle.trim() || !selectedDate) return;
+    playSound('confirm');
+    await addHabit(newHabitTitle.trim(), selectedDate, newHabitColor);
+    setIsDialogOpen(false);
+    setNewHabitTitle('');
+  }, [newHabitTitle, selectedDate, newHabitColor, addHabit]);
+
+  const handleDeleteHabit = useCallback(async (id: string) => {
+    playSound('select');
+    await deleteHabit(id);
+  }, [deleteHabit]);
+
+  const getColorClasses = (colorValue: string) => {
+    return HABIT_COLORS.find(c => c.value === colorValue) || HABIT_COLORS[0];
+  };
+
   const todayStr = formatDateKey(new Date());
   const monthLabel = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-  const handleCreateHabit = useCallback(async () => {
-    if (!newTitle.trim()) return;
-    playSound('confirm');
-    await createDefinition(newTitle.trim(), newColor);
-    setIsCreateOpen(false);
-    setNewTitle('');
-    setNewColor(HABIT_COLORS[0].value);
-  }, [newTitle, newColor, createDefinition]);
-
-  const handleToggleHabit = useCallback(async (defId: string, date: string) => {
-    playSound('click');
-    if (isHabitLogged(defId, date)) {
-      await unlogHabit(defId, date);
-    } else {
-      await logHabit(defId, date);
-    }
-  }, [isHabitLogged, logHabit, unlogHabit]);
-
-  const detailHabit = definitions.find(d => d.id === detailHabitId);
-  const detailStreak = detailHabitId ? getStreakForHabit(detailHabitId) : null;
+  const currentMonthHabits = habits.filter(h => {
+    const d = new Date(h.date);
+    return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+  });
+  const uniqueDays = new Set(currentMonthHabits.map(h => h.date)).size;
 
   if (!user) {
     return (
@@ -116,64 +142,35 @@ const HabitsScreen: React.FC = () => {
           <BrandText text="Meus Hábitos" />
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Defina seus hábitos e registre-os a cada dia
+          Registre os hábitos que praticou em cada dia
         </p>
       </header>
 
-      {/* Habit Definitions */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Hábitos</h2>
-          <Button size="sm" variant="outline" onClick={() => { playSound('click'); setIsCreateOpen(true); }}>
-            <Plus className="w-4 h-4 mr-1" /> Novo
-          </Button>
-        </div>
-
-        {definitions.length === 0 ? (
-          <div className="bg-card rounded-xl border border-border p-6 text-center">
-            <p className="text-muted-foreground text-sm">Crie seu primeiro hábito para começar a registrar!</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {definitions.map(def => {
-              const color = getColorClasses(def.color);
-              const streak = getStreakForHabit(def.id);
-              return (
-                <button
-                  key={def.id}
-                  onClick={() => { playSound('click'); setDetailHabitId(def.id); }}
-                  className="bg-card rounded-xl border border-border p-3 text-left transition-all hover:shadow-md active:scale-[0.98]"
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className={cn('w-3 h-3 rounded-full', color.bg)} />
-                    <span className="text-sm font-medium text-foreground truncate">{def.title}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Flame className="w-3 h-3 text-orange-500" />
-                    <span className="text-xs text-muted-foreground">{streak.current} {streak.current === 1 ? 'dia' : 'dias'}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Global Stats */}
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
           <div className="flex items-center gap-1.5 mb-1">
             <Flame className="w-4 h-4 text-orange-500" />
-            <p className="text-xs text-muted-foreground font-medium uppercase">Sequência geral</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase">Sequência atual</p>
           </div>
           <p className="text-2xl font-bold text-foreground">{streaks.current} <span className="text-sm font-normal text-muted-foreground">{streaks.current === 1 ? 'dia' : 'dias'}</span></p>
         </div>
         <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
           <div className="flex items-center gap-1.5 mb-1">
             <Trophy className="w-4 h-4 text-yellow-500" />
-            <p className="text-xs text-muted-foreground font-medium uppercase">Melhor geral</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase">Melhor sequência</p>
           </div>
           <p className="text-2xl font-bold text-foreground">{streaks.best} <span className="text-sm font-normal text-muted-foreground">{streaks.best === 1 ? 'dia' : 'dias'}</span></p>
+        </div>
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+          <p className="text-xs text-muted-foreground font-medium uppercase">Este mês</p>
+          <p className="text-2xl font-bold text-foreground">{currentMonthHabits.length}</p>
+          <p className="text-xs text-muted-foreground">hábitos registrados</p>
+        </div>
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+          <p className="text-xs text-muted-foreground font-medium uppercase">Dias ativos</p>
+          <p className="text-2xl font-bold text-foreground">{uniqueDays}</p>
+          <p className="text-xs text-muted-foreground">dias com hábitos</p>
         </div>
       </div>
 
@@ -185,7 +182,7 @@ const HabitsScreen: React.FC = () => {
           </Button>
           <div className="text-center">
             <h2 className="text-lg font-semibold text-foreground capitalize">{monthLabel}</h2>
-            <button onClick={() => { playSound('select'); setCurrentDate(new Date()); }} className="text-xs text-primary hover:underline">Hoje</button>
+            <button onClick={goToToday} className="text-xs text-primary hover:underline">Hoje</button>
           </div>
           <Button variant="ghost" size="icon" onClick={() => navigateMonth('next')}>
             <ChevronRight className="h-5 w-5" />
@@ -199,7 +196,7 @@ const HabitsScreen: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-7">
-          {calendarDays.map((day, index) => {
+          {calendarDays.days.map((day, index) => {
             const dateStr = formatDateKey(day);
             const isCurrentMonth = day.getMonth() === currentDate.getMonth();
             const isToday = dateStr === todayStr;
@@ -208,11 +205,7 @@ const HabitsScreen: React.FC = () => {
             return (
               <button
                 key={index}
-                onClick={() => {
-                  if (!definitions.length) return;
-                  playSound('click');
-                  setCheckinDate(dateStr);
-                }}
+                onClick={() => handleDayClick(day)}
                 className={cn(
                   'relative aspect-square flex flex-col items-center justify-start p-1 border-r border-b border-border/50 transition-colors',
                   isCurrentMonth ? 'bg-card hover:bg-muted/50' : 'bg-muted/20 text-muted-foreground/50',
@@ -242,56 +235,58 @@ const HabitsScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Day Check-in Dialog */}
-      <Dialog open={!!checkinDate} onOpenChange={open => { if (!open) setCheckinDate(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>
-              {checkinDate && new Date(checkinDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-2">Marque os hábitos que você praticou neste dia:</p>
+      {/* Viewing Day Habits */}
+      {viewingDate && (
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-4 mb-6 animate-fade-in">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-foreground">
+              {new Date(viewingDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
+            </h3>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={handleAddFromViewing}>
+                <Plus className="w-4 h-4 mr-1" /> Adicionar
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setViewingDate(null)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
           <div className="space-y-2">
-            {definitions.map(def => {
-              const color = getColorClasses(def.color);
-              const logged = checkinDate ? isHabitLogged(def.id, checkinDate) : false;
+            {getHabitsForDate(viewingDate).map(habit => {
+              const color = getColorClasses(habit.color);
               return (
-                <label
-                  key={def.id}
-                  className={cn(
-                    'flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors',
-                    logged ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50 border border-transparent hover:bg-muted'
-                  )}
-                >
-                  <Checkbox
-                    checked={logged}
-                    onCheckedChange={() => checkinDate && handleToggleHabit(def.id, checkinDate)}
-                  />
-                  <div className={cn('w-3 h-3 rounded-full', color.bg)} />
-                  <span className="text-sm font-medium text-foreground">{def.title}</span>
-                  {logged && <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />}
-                </label>
+                <div key={habit.id} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+                  <div className="flex items-center gap-3">
+                    <div className={cn('w-3 h-3 rounded-full', color.bg)} />
+                    <span className="text-sm font-medium text-foreground">{habit.title}</span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteHabit(habit.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               );
             })}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCheckinDate(null)}>Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Create Habit Dialog */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Novo Hábito</DialogTitle>
+            <DialogTitle>Registrar Hábito</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Nome do hábito</label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">
+                Qual hábito você praticou?
+              </label>
               <Input
-                value={newTitle}
-                onChange={e => setNewTitle(e.target.value)}
+                value={newHabitTitle}
+                onChange={e => setNewHabitTitle(e.target.value)}
                 placeholder="Ex: Meditação, Exercício, Leitura..."
                 onKeyDown={e => e.key === 'Enter' && handleCreateHabit()}
               />
@@ -302,11 +297,11 @@ const HabitsScreen: React.FC = () => {
                 {HABIT_COLORS.map(color => (
                   <button
                     key={color.value}
-                    onClick={() => { playSound('click'); setNewColor(color.value); }}
+                    onClick={() => { playSound('click'); setNewHabitColor(color.value); }}
                     className={cn(
                       'w-9 h-9 rounded-full transition-all',
                       color.bg,
-                      newColor === color.value
+                      newHabitColor === color.value
                         ? 'ring-2 ring-offset-2 ring-foreground scale-110'
                         : 'opacity-60 hover:opacity-100'
                     )}
@@ -317,60 +312,11 @@ const HabitsScreen: React.FC = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreateHabit} disabled={!newTitle.trim()}>
-              <CheckCircle2 className="w-4 h-4 mr-1" /> Criar
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateHabit} disabled={!newHabitTitle.trim()} className="bg-primary text-primary-foreground">
+              <CheckCircle2 className="w-4 h-4 mr-1" /> Salvar
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Habit Detail Dialog */}
-      <Dialog open={!!detailHabitId} onOpenChange={open => { if (!open) setDetailHabitId(null); }}>
-        <DialogContent className="max-w-sm">
-          {detailHabit && detailStreak && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <div className={cn('w-4 h-4 rounded-full', getColorClasses(detailHabit.color).bg)} />
-                  {detailHabit.title}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-2">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-muted/50 rounded-xl p-3 text-center">
-                    <Flame className="w-5 h-5 text-orange-500 mx-auto mb-1" />
-                    <p className="text-xl font-bold text-foreground">{detailStreak.current}</p>
-                    <p className="text-xs text-muted-foreground">Sequência</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-xl p-3 text-center">
-                    <Trophy className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
-                    <p className="text-xl font-bold text-foreground">{detailStreak.best}</p>
-                    <p className="text-xs text-muted-foreground">Melhor</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-xl p-3 text-center">
-                    <CheckCircle2 className="w-5 h-5 text-primary mx-auto mb-1" />
-                    <p className="text-xl font-bold text-foreground">{detailStreak.total}</p>
-                    <p className="text-xs text-muted-foreground">Total</p>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter className="flex gap-2">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={async () => {
-                    playSound('select');
-                    await archiveDefinition(detailHabit.id);
-                    setDetailHabitId(null);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 mr-1" /> Excluir
-                </Button>
-                <Button variant="outline" onClick={() => setDetailHabitId(null)}>Fechar</Button>
-              </DialogFooter>
-            </>
-          )}
         </DialogContent>
       </Dialog>
     </div>

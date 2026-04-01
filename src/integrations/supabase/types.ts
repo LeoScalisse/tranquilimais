@@ -157,39 +157,11 @@ export type Database = {
         }
         Relationships: []
       }
-      habit_definitions: {
-        Row: {
-          archived: boolean
-          color: string
-          created_at: string
-          id: string
-          title: string
-          user_id: string
-        }
-        Insert: {
-          archived?: boolean
-          color?: string
-          created_at?: string
-          id?: string
-          title: string
-          user_id: string
-        }
-        Update: {
-          archived?: boolean
-          color?: string
-          created_at?: string
-          id?: string
-          title?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       habits: {
         Row: {
           color: string
           created_at: string
           date: string
-          habit_definition_id: string | null
           id: string
           title: string
           user_id: string
@@ -198,7 +170,6 @@ export type Database = {
           color?: string
           created_at?: string
           date: string
-          habit_definition_id?: string | null
           id?: string
           title: string
           user_id: string
@@ -207,20 +178,11 @@ export type Database = {
           color?: string
           created_at?: string
           date?: string
-          habit_definition_id?: string | null
           id?: string
           title?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "habits_habit_definition_id_fkey"
-            columns: ["habit_definition_id"]
-            isOneToOne: false
-            referencedRelation: "habit_definitions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       moods: {
         Row: {
