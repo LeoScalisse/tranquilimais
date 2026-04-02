@@ -75,7 +75,7 @@ const NewsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [mainTab, setMainTab] = useState<MainTab>('estudos');
+  const [mainTab, setMainTab] = useState<MainTab>('boas-noticias');
   const [estudosFilter, setEstudosFilter] = useState('Todos');
   const [boasNoticiasFilter, setBoasNoticiasFilter] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -288,8 +288,8 @@ const NewsScreen: React.FC = () => {
       {/* Main Tabs */}
       <Tabs value={mainTab} onValueChange={(v) => { setMainTab(v as MainTab); setSearchQuery(''); }} className="mb-4">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="estudos">🔬 Estudos</TabsTrigger>
           <TabsTrigger value="boas-noticias">🌟 Boas Notícias</TabsTrigger>
+          <TabsTrigger value="estudos">🔬 Estudos</TabsTrigger>
           <TabsTrigger value="saved">⭐ Salvos {savedNews.length > 0 && `(${savedNews.length})`}</TabsTrigger>
         </TabsList>
 
