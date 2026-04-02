@@ -39,13 +39,13 @@ Deno.serve(async (req) => {
       'Estudos-Meditação': 'estudos científicos meditação mindfulness atenção plena benefícios cérebro pesquisa',
       'Estudos-Saúde Mental': 'estudos científicos saúde mental psicologia terapia bem-estar emocional pesquisa',
       // Boas Notícias - geral
-      'Boas Notícias': 'boas notícias reais mundo animais salvos extinção espécies recuperadas melhoria sociedade avanço progresso ambiental energia renovável reflorestamento redução pobreza conquista humanitária descoberta positiva -violência -crime -tragédia -morte -guerra',
+      'Boas Notícias': 'boas notícias positivas mundo progresso avanço conquista humanidade esperança melhoria sociedade descoberta animais natureza tecnologia solidariedade',
       // Boas Notícias - sub-filtros
-      'BoasNoticias-Meio Ambiente': 'boas notícias meio ambiente animais salvos extinção espécies recuperadas reflorestamento oceanos limpos energia renovável clima positivo preservação natureza -desmatamento -poluição',
-      'BoasNoticias-Tecnologia': 'boas notícias tecnologia inovação descoberta científica avanço tecnológico cura doença energia limpa inteligência artificial positiva progresso -hack -vazamento',
-      'BoasNoticias-Solidariedade': 'boas notícias solidariedade voluntariado doação comunidade ajuda humanitária pessoas ajudando gentileza bondade humana superação história inspiradora',
-      'BoasNoticias-Saúde': 'boas notícias saúde cura vacina tratamento descoberta médica avanço medicina expectativa vida qualidade vida melhoria -pandemia -surto',
-      'BoasNoticias-Cultura': 'boas notícias cultura educação arte inclusão diversidade patrimônio conquista social igualdade direitos avanço cultural',
+      'BoasNoticias-Meio Ambiente': 'boas notícias meio ambiente natureza animais recuperação espécies reflorestamento energia renovável oceanos preservação sustentabilidade progresso ambiental',
+      'BoasNoticias-Tecnologia': 'boas notícias tecnologia inovação descoberta científica avanço cura energia limpa inteligência artificial progresso',
+      'BoasNoticias-Solidariedade': 'boas notícias solidariedade voluntariado doação comunidade ajuda humanitária gentileza bondade superação história inspiradora',
+      'BoasNoticias-Saúde': 'boas notícias saúde cura vacina tratamento descoberta médica avanço medicina qualidade vida melhoria',
+      'BoasNoticias-Cultura': 'boas notícias cultura educação arte inclusão diversidade patrimônio conquista social igualdade avanço cultural',
     };
 
     const searchQuery = categoryQueries[category] || categoryQueries['Boas Notícias'];
