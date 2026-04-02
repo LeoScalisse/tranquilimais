@@ -75,7 +75,7 @@ const NewsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [mainTab, setMainTab] = useState<MainTab>('estudos');
+  const [mainTab, setMainTab] = useState<MainTab>('boas-noticias');
   const [estudosFilter, setEstudosFilter] = useState('Todos');
   const [boasNoticiasFilter, setBoasNoticiasFilter] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
