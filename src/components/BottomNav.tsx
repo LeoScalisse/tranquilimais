@@ -1,6 +1,5 @@
 import React from 'react';
 import { Screen } from '../types';
-import { playSound } from '../services/soundService';
 import { Dock, DockIcon, DockItem, DockLabel } from './ui/dock';
 import { Home, MessageCircle, Heart, Gamepad2, BarChart3, Newspaper } from 'lucide-react';
 
