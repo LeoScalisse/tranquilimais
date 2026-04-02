@@ -21,7 +21,6 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, navigateTo }) => {
 
   const handleClick = (screen: Screen) => {
     if (activeScreen !== screen) {
-      playSound('select');
       navigateTo(screen);
     }
   };

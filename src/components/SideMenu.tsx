@@ -38,13 +38,11 @@ const SideMenu: React.FC<SideMenuProps> = ({
   ];
 
   const handleNavigate = (screen: Screen) => {
-    playSound('select');
     navigateTo(screen);
     onClose();
   };
 
   const handleLogout = () => {
-    playSound('select');
     onLogout();
     onClose();
   };

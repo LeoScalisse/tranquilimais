@@ -48,8 +48,8 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         tranquili: {
-          blue: "#38b6ff",
-          yellow: "#ffde59",
+          blue: "#5cc3ff",
+          yellow: "#ffdb58",
         },
       },
       borderRadius: {
