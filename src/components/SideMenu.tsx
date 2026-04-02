@@ -2,7 +2,6 @@ import React from 'react';
 import { Screen, UserProfile } from '../types';
 import { XIcon, UserIcon, LogOutIcon } from './ui/Icons';
 import { ICON_SETS } from '../constants';
-import { playSound } from '../services/soundService';
 
 interface SideMenuProps {
   isOpen: boolean;
